@@ -57,6 +57,13 @@ Legend: `[ ]` todo · `[x]` done · **⛔ Gate** = decision needed before coding
 | 2026-10-14 | **P5-5** "Remove" vendor only while Invited: expires pending invites, entry → Not Selected (kept as history, labelled "Removed"). |
 | 2026-10-14 | **P5-6** Shortlist toggle once submitted (Shortlisted ↔ Under Review). Vendors emailed only on Shortlisted / Not Selected / Contracted, at most once per status per RFP. |
 | 2026-10-14 | **Defaults (P5)** Pipeline date filter = submission deadline; dashboard renewal + activity panels use real data now; vendor invites share the S-2 quota; 64-char tokens, 72 h. |
+| 2026-10-14 | **P6-1** Vendor uploads go browser → Supabase Storage via a short-lived signed upload URL for an exact server-chosen path; the API then confirms (object exists, ≤ 50MB, PDF/DOCX/XLSX signature) before creating the `queued` document row. (Vercel's 4.5MB body limit rules out proxying.) |
+| 2026-10-14 | **P6-2** Vendor "Remove" before submit permanently deletes the draft document row + stored file (logged). Nothing removable after submit. |
+| 2026-10-14 | **P6-3** Uploads / Submit close after the RFP's submission deadline, or once the RFP is archived / approval-pending / contracted. No deadline = open. |
+| 2026-10-14 | **P6-4** Invite acceptance creates the vendor auth user already confirmed (the emailed link proves the inbox). An email belonging to an internal account is refused. |
+| 2026-10-14 | **P6-5** Expired-invite page shows the inviting PM's email as the contact. |
+| 2026-10-14 | **P6-6** On submit: PM in-app notification + new `vendor-submitted.tsx` email; entry → Submitted; first submission → RFP "Submissions In". |
+| 2026-10-14 | **Defaults (P6)** Vendor status refresh by 30 s polling; vendor-facing labels: internal Approved → Shortlisted, removed → Not Selected; vendor data only via server routes with whitelisted fields (P2-4). |
 | 2026-10-14 | **CLAUDE.md over Tech Stack §8.2** Kanban optimistic updates live in the TanStack Query cache, not Zustand ("never put API data in Zustand"). |
 | 2026-10-14 | **#34** Repo already exists — no `git init`; scaffold in a temp dir and copy in; single commit at the end of the verified phase. |
 
@@ -260,22 +267,25 @@ Verify (2026-10-14 — headless Chromium against the production build):
 
 ⛔ Gates: #13 (existing-account vendors / multiple orgs), #25 (vendor read access to RFP + org), #4 (`waitUntil` / `@vercel/functions`).
 
-- [ ] `/vendor/invite/[token]` + `/vendor/invite/expired`
-- [ ] `/api/vendor/invite/[token]` (GET validate, POST accept)
-- [ ] Vendor home: greeting, My RFPs table
-- [ ] `/vendor/rfp/[id]`: info panel, countdown, upload zone (PDF/DOCX/XLSX ≤ 50MB), file list, submit + confirm modal, post-submit state, status banners
-- [ ] `/api/submissions` (GET, POST), `/api/submissions/[id]/documents` (POST), `/[docId]` (GET, DELETE), `/api/submissions/[id]/submit`
-- [ ] Vendor isolation review on every response
+Gate #4 (`waitUntil`) moves to Phase 7 — Phase 6 creates `queued` documents only; processing is fired in Phase 7.
 
-Verify:
-- [ ] Valid token loads page; expired → `/vendor/invite/expired`
-- [ ] Vendor creates account and logs in
-- [ ] Vendor home shows only their RFPs
-- [ ] Upload limits enforced client-side
-- [ ] File stored under `{org_id}/…`; document row `queued`
-- [ ] Submit disabled until a document uploads; locked after submit
-- [ ] Vendor gets 401/403 on `/dashboard` and `/api/rfps`
-- [ ] Commit
+- [x] `/vendor/invite/[token]` (create / sign-in / internal-refused modes) + `/vendor/invite/expired` (inviting PM's email, P6-5); shared `AuthFrame` layout
+- [x] `/api/vendor/invite/[token]` (GET validate, POST accept — atomic single use, confirmed account, sign-in)
+- [x] Vendor home: greeting, My RFPs table (across orgs)
+- [x] `/vendor/rfp/[id]`: info panel, countdown ≤ 7 days, drag-and-drop + browse (PDF/DOCX/XLSX ≤ 50MB), per-file progress / Uploaded / Failed + Retry, Remove (P6-2), submit + confirm modal, post-submit state, status banners, 30 s status polling
+- [x] `/api/submissions` (GET, POST), `/api/submissions/[id]/documents` (POST sign / confirm — P6-1), `/[docId]` (GET internal, DELETE vendor draft), `/api/submissions/[id]/submit` (P6-6: notification + `vendor-submitted.tsx` email, RFP → Submissions In); `/api/vendor/rfps/[id]` for polling (not in Schema §8)
+- [x] Vendor isolation: `src/lib/vendor/portal.ts` whitelists every field the vendor receives; ownership checked on every route
+
+Verify (2026-10-14 — headless Chromium against the production build):
+- [x] Valid token loads page (org, RFP, message); used or > 72 h → `/vendor/invite/expired`; unknown token 410
+- [x] Vendor creates account and is signed in; existing vendor signs in to accept; internal email refused
+- [x] Vendor home shows only their RFPs
+- [x] Upload limits enforced client-side (type, 50MB) and server-side (signature check rejects a spoofed PDF and deletes it)
+- [x] File stored under `{org_id}/{rfp_id}/{vendor_id}/{uuid}-{name}`; document row `queued`
+- [x] Submit disabled until a document uploads; locked after submit (upload / remove / resubmit → 409)
+- [x] Vendor on `/dashboard` / `/pipeline` is redirected to `/vendor`; `/api/rfps` → 403; internal document API → 403
+- [x] Extra: other vendors can't read / upload / delete / sign URLs for the files; deadline closes uploads (P6-3); banners; Approved shows as Shortlisted; PM notification + email; RFP → Submissions In — 56/56
+- [x] Commit
 
 ## Phase 7 — AI processing
 
