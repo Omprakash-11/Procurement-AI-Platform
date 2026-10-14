@@ -154,7 +154,10 @@ npx playwright test           # E2E against local Supabase + seed data
 supabase start                # Docker Desktop (WSL 2) must be running
 supabase stop                 # always run before shutting down
 supabase migration new <name>
-npx supabase gen types typescript --local > src/types/database.ts
+supabase db reset             # rebuild local DB: all migrations + supabase/seed.sql
+# Types: use the installed CLI (not npx), and avoid PowerShell 5.1 redirects (they add a BOM):
+#   bash: supabase gen types typescript --local > src/types/database.ts && npx prettier --write src/types/database.ts
+#   (in Git Bash, put Docker Desktop's resources/bin on PATH first, or the CLI falls back to Podman)
 ```
 
 Windows notes: use forward slashes in imports; `.gitattributes` has `* text=auto eol=lf`; never use `export VAR=…` — env vars come from `.env.local` (never committed; `.env.example` is).
@@ -188,7 +191,10 @@ These were found while reading the docs. **Each one is a decision point** — wh
 - **#3** → add `tailwindcss-animate` 1.0.7 and `recharts` 2.15.4 (pinned); JetBrains Mono via `next/font/google`.
 - **#5** → Next 15.5.27 with `eslint` 9.26.0 + `eslint-config-next` 15.5.27, flat config via FlatCompat (`@eslint/eslintrc`).
 - **#7** → `AUTH_SECRET`/`NEXTAUTH_SECRET` omitted from env files.
-- **#16 (partly)** → local Supabase via Docker for Phases 2–11; the exact migrate/seed commands are still open.
+- **#8–#12, #16** → see P2-7 … P2-9 in `TODO.md`: functions migration before RLS; requirements→rfps FK added in 0007; seed only in `supabase/seed.sql`; `set_updated_at` on the 15 tables with `updated_at`; NOT NULL FKs use NO ACTION; local workflow is `supabase db reset`.
+- **#13** → one `vendor_accounts` row per (org, email); vendor JWT has no `org_id`; vendor RLS keys on `auth.uid()` (P2-3).
+- **#14** → follow the Schema's JWT helper functions.
+- **Phase 2 security fixes** (P2-1, P2-2, P2-4, #39): admin-API-only account creation from `raw_app_meta_data`, public signup off; auth hook grants for `supabase_auth_admin`; vendors reach RFP/org/documents/storage only through service-role API routes; profile self-update limited to `full_name`/`avatar_url`.
 - **#20** → `popover` / `popover-foreground` mapped in `tailwind.config.ts`.
 - **New: Next.js version** → Next 15.5.27 + React 19.2.8, because every Next 14.2.x release has open critical/high advisories.
 

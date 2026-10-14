@@ -18,6 +18,16 @@ Legend: `[ ]` todo · `[x]` done · **⛔ Gate** = decision needed before coding
 | 2026-10-14 | **D5 (#20, #24)** Content Guidelines §15 HSL values are authoritative over the §2.2 hex table. `popover` / `popover-foreground` mapped in `tailwind.config.ts`. |
 | 2026-10-14 | **D6 (#7)** `AUTH_SECRET` / `NEXTAUTH_SECRET` omitted (unused). |
 | 2026-10-14 | **D7 → Option B** The woff2 wasn't available, so Cal Sans loads via `next/font/google` (`Cal_Sans`, single weight 400 — the same face; no self-hosted SemiBold file). `adjustFontFallback: false` with a system-ui fallback (next/font has no metrics for it). |
+| 2026-10-14 | **P2-1 (#37)** Accounts created only server-side via the admin API; `handle_new_user` reads role/org from `raw_app_meta_data` (service-role only); public signup disabled; auth users without an internal role get no profile. |
+| 2026-10-14 | **P2-2 (#33)** Auth hook registered in `supabase/config.toml`; `supabase_auth_admin` gets EXECUTE on the hook + SELECT/RLS read on `profiles`/`vendor_accounts`; hook revoked from anon/authenticated/public; app_metadata merged, and stale role/org claims stripped. |
+| 2026-10-14 | **P2-3 (#13)** One `vendor_accounts` row per (org, email), reused across that org's RFPs; one auth user may have rows in several orgs. Vendor JWT: `user_type=vendor`, `role=vendor`, no `org_id`; vendor access keyed on `auth.uid()`. |
+| 2026-10-14 | **P2-4 (#25, #38)** Vendors get RLS read only on their own `vendor_accounts`, `rfp_vendor_entries`, `submissions`. RFP/org details, document upload/list/delete and file downloads go through service-role API routes with whitelisted fields. No vendor storage policies. |
+| 2026-10-14 | **P2-5 (#25)** requirements: DH own (read/create, edit while draft/submitted), PM read/update in org, FA none. rfp_vendor_entries: internal read, PM write. vendor_invites, scoring_templates: PM only. |
+| 2026-10-14 | **P2-6 (#26)** `can_read_rfp(rfp_id)`: PM any RFP in org; DH RFPs linked to own requirements; FA RFPs with an approval request. Used by the read policies on rfps and all evaluation-side tables. |
+| 2026-10-14 | **P2-7 (#12)** Keep NOT NULL; replace `ON DELETE SET NULL` with a restricting action on those FKs. Implemented as `NO ACTION` (checked at end of statement) rather than `RESTRICT`, so an org-level cascade delete still works. |
+| 2026-10-14 | **P2-8 (#8–#11)** Filenames kept, 0021 = functions, 0022 = RLS; requirements→rfps FK added in 0007; seed only in `supabase/seed.sql`; `set_updated_at` on the 15 tables with `updated_at`; trigger total 19. |
+| 2026-10-14 | **P2-9 (#16)** Local workflow: `supabase db reset` (migrations + seed); `supabase migration up` for increments. |
+| 2026-10-14 | **P2-10** Seed users `pm@ / dh@ / fa@ / vendor1@ / vendor2@procuremaster.test`, password `Password123!` (local only). |
 | 2026-10-14 | **#34** Repo already exists — no `git init`; scaffold in a temp dir and copy in; single commit at the end of the verified phase. |
 
 ## Open items found beyond CLAUDE.md #1–23
@@ -35,6 +45,10 @@ Legend: `[ ]` todo · `[x]` done · **⛔ Gate** = decision needed before coding
 34. Repo is already a Git repo — Plan Phase 1 says `git init`.
 35. Every Next 14.2.x has open critical/high advisories → resolved by D1 (Next 15.5.27).
 36. `npm audit` after the Phase 1 install (2026-10-14): 30 advisories (0 critical, 18 high) in doc-pinned packages. Non-major fixes exist for `@playwright/test` (→1.64.0), `@supabase/supabase-js` (→2.117.3), `eslint` (→9.39.5), `mammoth` (→1.13.0), `react-email` (→4.3.2). Major-only fixes: `puppeteer-core` (→25.x), `postcss`/`next` (→16.x). No fix: `tailwindcss` 3.4.17 (transitive dep), `tailwindcss-animate`, **`xlsx` 0.18.5 — parses untrusted vendor uploads; npm has no patched release (SheetJS only publishes fixes on its own CDN)**. Decide before Phase 7 (xlsx) and before Phase 12 (the rest).
+37. `handle_new_user` trusted client-controlled `raw_user_meta_data` for role/org → resolved by P2-1.
+38. Schema vendor storage read policy matched the whole org folder (other vendors' proposals); `documents_vendor_own` exposed AI extraction → resolved by P2-4.
+39. `profiles_self_update` allowed changing own `role` / `org_id` / `is_active`. **Applied in Phase 2 pending user confirmation:** column privileges restrict self-updates to `full_name` and `avatar_url`.
+40. Open for Phase 3+: JWT `app_metadata` also carries `org_name` / `full_name` copied from `raw_app_meta_data` at account creation (harmless, but stale after renames). `activity_log` stays readable by all internal users in the org (Schema §5.9), including before/after state of scores — wider than P2-6's DH/FA scoping.
 
 ---
 
@@ -85,25 +99,28 @@ Verify (2026-10-14, checked headless with Playwright Chromium):
 
 ⛔ Gates: #8 (RLS before helper functions), #9 (`requirements` ↔ `rfps` circular FK), #10 (seed as migration), #11 (`set_updated_at` on tables without `updated_at`), #12 (`NOT NULL … ON DELETE SET NULL`), #13 (vendor uniqueness / multi-org vendors), #14 (Tech Stack RLS example), #16 (`db push`/`db seed` vs `supabase db reset` locally), #25, #26, #33.
 
-- [ ] Migrations 0001–0026 per Backend Schema §10 (order corrected per gate answers)
-- [ ] Extensions, enums, 18 tables, indexes, `vendor_accounts.search_vector`
-- [ ] Helper functions + `custom_access_token_hook` (+ required grants)
-- [ ] RLS enabled + policies on every table
-- [ ] Triggers: `set_updated_at`, `rfp_evaluation_created`, `approval_creates_contract`, `criteria_weight_check`
-- [ ] Storage buckets (`vendor-documents`, `org-assets`, `contract-documents`) + storage policies
-- [ ] pg_cron notification purge
-- [ ] Register auth hook (local: `config.toml`)
-- [ ] `supabase/seed.sql`: 1 org, PM/DH/FA users, 2 vendors, 1 RFP, 1 requirement
-- [ ] `src/lib/supabase/server.ts` and `client.ts`
+- [x] Migrations 0001–0026 per Backend Schema §10 (0021 functions ↔ 0022 RLS swapped, P2-8)
+- [x] Extensions, 18 enums, 18 tables, indexes, `vendor_accounts.search_vector`
+- [x] Helper functions (+ `my_vendor_account_ids`, `can_read_rfp`, `can_read_evaluation`, `can_read_document`) + `custom_access_token_hook` with grants (0026)
+- [x] RLS enabled + policies on every table (41 policies); profiles self-update limited to `full_name`/`avatar_url` (#39)
+- [x] Triggers: 15× `set_updated_at`, `on_auth_user_created`, `rfp_evaluation_created`, `approval_creates_contract`, `criteria_weight_check` = 19
+- [x] Storage buckets (all private; vendor-documents 50MB limit) + internal read policy only (P2-4)
+- [x] pg_cron notification purge
+- [x] Auth hook registered in `config.toml`; public signup disabled
+- [x] `supabase/seed.sql`: 1 org, PM/DH/FA, 2 vendors (auth users + vendor_accounts), 1 requirement ↔ 1 RFP, entries, accepted invites
+- [x] `src/lib/supabase/server.ts` (async cookies) and `client.ts`, typed with `Database`
+- [x] `src/types/database.ts` generated (done early — originally a Phase 3 task)
+- [x] Doc bug fixed: §6.5 `RAISE` format string had no placeholder for its argument
 
-Verify:
-- [ ] Migrations apply with 0 errors
-- [ ] 18 tables, all enums, ≥ 20 triggers, all policies visible in Studio
-- [ ] Seed data visible (1 org, 3 internal users, 2 vendors, 1 RFP)
-- [ ] Auth hook registered; JWT carries `user_type`, `role`, `org_id`
-- [ ] Supabase client files compile
-- [ ] Unauthenticated `SELECT * FROM profiles` returns nothing (RLS)
-- [ ] Commit
+Verify (2026-10-14):
+- [x] Migrations apply with 0 errors (`supabase start` / `supabase db reset`)
+- [x] 18 tables (all RLS), 18 enums, **19** triggers (checklist amended from ≥ 20 by P2-8), 41 policies, 3 buckets, 1 cron job — checked by SQL against the catalog
+- [x] Seed data: 1 org, 3 internal users, 2 vendors, 1 RFP (+ auto evaluation), 1 requirement
+- [x] Auth hook works; JWT carries `user_type`, `role`, `org_id` (vendors: no org_id); provider fields kept; deactivated user's claims stripped
+- [x] Supabase client files compile; tsc / lint / build clean
+- [x] Unauthenticated `SELECT * FROM profiles` returns nothing (RLS)
+- [x] Extra checks — 28 passed, 0 failed: public signup refused; per-role read scopes (PM/DH/FA/vendor); vendor sees only own entry; DH can't change own role; vendor/DH can't insert RFPs; renewals RPC not callable; no vendor storage access; approval → contract trigger as FA; one pending approval per RFP; weights > 100% rejected
+- [x] Commit
 
 ## Phase 3 — Authentication
 
