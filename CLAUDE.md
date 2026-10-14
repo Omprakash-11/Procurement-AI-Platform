@@ -59,9 +59,9 @@ Waiting for your answer before proceeding.
 
 ## Stack at a glance
 
-Exact versions live in Tech Stack §16 (`package.json`). Versions are pinned — no `^` or `~`; `.npmrc` has `save-exact=true`; use `npm ci`.
+Exact versions live in Tech Stack §16 (`package.json`), **as amended by the decisions in `TODO.md`** — the repo's `package.json` is the source of truth once it exists. Versions are pinned — no `^` or `~`; `.npmrc` has `save-exact=true`; use `npm ci`.
 
-- **Framework:** Next.js 14.2 App Router, React 18.3, TypeScript 5.8 strict (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`). Path alias `@/*` → `./src/*`.
+- **Framework:** Next.js 15.5 App Router, React 19.2 (upgraded from the docs' 14.2/18.3 for security — decision D1), TypeScript 5.8 strict (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`). Path alias `@/*` → `./src/*`.
 - **Data:** Supabase (Postgres + Auth + Storage), `@supabase/ssr` with separate server and browser clients.
 - **AI:** Google Gemini via `@google/generative-ai`, **server-side only**.
 - **Docs parsing:** `pdf-parse`, `mammoth`, `xlsx`. No OCR in v1.
@@ -183,6 +183,14 @@ Purchase orders · ERP integrations · Slack/Teams notifications · OCR · paral
 ## Known conflicts and gaps in the docs
 
 These were found while reading the docs. **Each one is a decision point** — when a task touches it, use the decision protocol. Do not resolve them silently. When the user answers, update this section.
+
+**Resolved (2026-10-14)** — full log in `TODO.md` → "Decisions made"; further conflicts #24+ are tracked there too:
+- **#3** → add `tailwindcss-animate` 1.0.7 and `recharts` 2.15.4 (pinned); JetBrains Mono via `next/font/google`.
+- **#5** → Next 15.5.27 with `eslint` 9.26.0 + `eslint-config-next` 15.5.27, flat config via FlatCompat (`@eslint/eslintrc`).
+- **#7** → `AUTH_SECRET`/`NEXTAUTH_SECRET` omitted from env files.
+- **#16 (partly)** → local Supabase via Docker for Phases 2–11; the exact migrate/seed commands are still open.
+- **#20** → `popover` / `popover-foreground` mapped in `tailwind.config.ts`.
+- **New: Next.js version** → Next 15.5.27 + React 19.2.8, because every Next 14.2.x release has open critical/high advisories.
 
 **AI and dependencies**
 1. PRD §6 says Anthropic Claude API; Tech Stack, Schema, and Plan say Gemini. Treat Gemini as current, but confirm.
