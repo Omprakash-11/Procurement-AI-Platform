@@ -49,6 +49,9 @@ Legend: `[ ]` todo · `[x]` done · **⛔ Gate** = decision needed before coding
 38. Schema vendor storage read policy matched the whole org folder (other vendors' proposals); `documents_vendor_own` exposed AI extraction → resolved by P2-4.
 39. `profiles_self_update` allowed changing own `role` / `org_id` / `is_active`. **Applied in Phase 2 pending user confirmation:** column privileges restrict self-updates to `full_name` and `avatar_url`.
 40. Open for Phase 3+: JWT `app_metadata` also carries `org_name` / `full_name` copied from `raw_app_meta_data` at account creation (harmless, but stale after renames). `activity_log` stays readable by all internal users in the org (Schema §5.9), including before/after state of scores — wider than P2-6's DH/FA scoping.
+41. Security review (after the Phase 2 commit): approval policies let a PM set status = 'approved' (self-approval → contract) and let an FA rewrite rfp/vendor/evaluation or decide requests not sent to them. **Fixed in 0027**: per-role WITH CHECK transitions, column-level UPDATE grants, and the contract trigger requires an active FA decider.
+42. Security review: a DH could set linked_rfp_id on their own requirement to gain read access to any RFP. **Fixed in 0027**: can_read_rfp uses only the PM-controlled rfps.requirement_id; DH policies require linked_rfp_id IS NULL.
+43. Security review: RLS checked a row's own org_id, not its parents'; a known foreign UUID could attach rows to another tenant. **Fixed in 0027**: enforce_same_org() trigger on 14 tables checks every parent reference (applies to the service role too).
 
 ---
 
@@ -120,7 +123,8 @@ Verify (2026-10-14):
 - [x] Supabase client files compile; tsc / lint / build clean
 - [x] Unauthenticated `SELECT * FROM profiles` returns nothing (RLS)
 - [x] Extra checks — 28 passed, 0 failed: public signup refused; per-role read scopes (PM/DH/FA/vendor); vendor sees only own entry; DH can't change own role; vendor/DH can't insert RFPs; renewals RPC not callable; no vendor storage access; approval → contract trigger as FA; one pending approval per RFP; weights > 100% rejected
-- [x] Commit
+- [x] Commit (31be1ca)
+- [x] Post-commit security review fixes in `0027_security_hardening.sql` (#41–#43): 17 new checks pass, the earlier 28 still pass. Trigger total is now 33 (19 + 14 same-org triggers)
 
 ## Phase 3 — Authentication
 
