@@ -20,12 +20,17 @@ export const loginSchema = z.object({
 })
 export type LoginFormValues = z.infer<typeof loginSchema>
 
-export const signupSchema = withConfirm({
+// Decision S-1: no password at signup — it is chosen after the email is proven (/set-password).
+export const signupSchema = z.object({
   fullName: z.string().trim().min(1, 'Full name is required.').max(120),
   email: emailSchema,
   orgName: z.string().trim().min(1, 'Organisation name is required.').max(120),
 })
 export type SignupFormValues = z.infer<typeof signupSchema>
+
+export const setPasswordSchema = withConfirm({})
+export type SetPasswordFormValues = z.infer<typeof setPasswordSchema>
+export const setPasswordRequestSchema = z.object({ password: passwordSchema })
 
 export const resetRequestSchema = z.object({ email: emailSchema })
 export type ResetRequestFormValues = z.infer<typeof resetRequestSchema>

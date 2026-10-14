@@ -18,7 +18,7 @@ export function SignupForm() {
   const [formError, setFormError] = useState<string | null>(null)
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
-    defaultValues: { fullName: '', email: '', orgName: '', password: '', confirmPassword: '' },
+    defaultValues: { fullName: '', email: '', orgName: '' },
   })
   const { errors, isSubmitting } = form.formState
 
@@ -46,8 +46,8 @@ export function SignupForm() {
           <MailCheck className="size-6 text-primary" aria-hidden="true" />
           <h1 className="font-heading text-4xl text-card-foreground">Check your email</h1>
           <CardDescription>
-            We sent a confirmation link to <span className="font-medium text-foreground">{sentTo}</span>. Open it to finish setting up your
-            workspace. The link expires in 60 minutes.
+            We sent a confirmation link to <span className="font-medium text-foreground">{sentTo}</span>. Open it to choose your password and
+            finish setting up your workspace. The link expires in 60 minutes.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -58,7 +58,10 @@ export function SignupForm() {
     <Card>
       <CardHeader className="space-y-1.5">
         <h1 className="font-heading text-4xl text-card-foreground">Create your workspace</h1>
-        <CardDescription>Set up ProcureMaster for your organisation. You&apos;ll be its Procurement Manager.</CardDescription>
+        <CardDescription>
+          Set up ProcureMaster for your organisation. You&apos;ll be its Procurement Manager. We&apos;ll email you a link to confirm your address
+          and choose a password.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} noValidate className="space-y-5">
@@ -76,12 +79,6 @@ export function SignupForm() {
           </FormField>
           <FormField id="orgName" label="Organisation name" required error={errors.orgName?.message}>
             <Input autoComplete="organization" {...fieldA11y('orgName', errors.orgName?.message)} {...form.register('orgName')} />
-          </FormField>
-          <FormField id="password" label="Password" required error={errors.password?.message} hint="At least 8 characters, with letters and numbers.">
-            <Input type="password" autoComplete="new-password" {...fieldA11y('password', errors.password?.message)} {...form.register('password')} />
-          </FormField>
-          <FormField id="confirmPassword" label="Confirm password" required error={errors.confirmPassword?.message}>
-            <Input type="password" autoComplete="new-password" {...fieldA11y('confirmPassword', errors.confirmPassword?.message)} {...form.register('confirmPassword')} />
           </FormField>
           <SubmitButton pending={isSubmitting} pendingLabel="Creating your workspace" size="lg" className="w-full">
             Create Workspace

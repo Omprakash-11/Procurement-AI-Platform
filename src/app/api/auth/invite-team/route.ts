@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import TeamInviteEmail from '@/emails/team-invite'
 import { logActivity } from '@/lib/activity'
 import { apiError, appUrl, requireUser, validationError } from '@/lib/api'
+import { INVITE_LIMIT_MESSAGE, remainingInvites } from '@/lib/auth/invite-limit'
 import { issueTeamInviteToken } from '@/lib/auth/team-invite'
 import { sendEmail } from '@/lib/email/send'
 import { inviteTeamSchema } from '@/lib/schemas/auth'
@@ -39,11 +40,18 @@ export async function POST(request: Request) {
 
   const seen = new Set<string>()
   const results: InviteResult[] = []
+  let remaining = await remainingInvites(inviter.org_id) // S-2
 
   for (const row of parsed.data.invites) {
     const email = row.email.toLowerCase()
     if (seen.has(email)) continue
     seen.add(email)
+
+    if (remaining <= 0) {
+      results.push({ email, status: 'error', message: INVITE_LIMIT_MESSAGE })
+      continue
+    }
+    remaining -= 1
 
     const userId = await resolveInvitee(email, row.role, inviter.org_id)
     if ('error' in userId) {
@@ -55,7 +63,8 @@ export async function POST(request: Request) {
       const token = await issueTeamInviteToken(userId.id)
       await sendEmail({
         to: email,
-        subject: `Join ${orgName} on ProcureMaster`,
+        // S-2: neutral subject — org / inviter names (user-supplied) appear only in the body.
+        subject: "You've been invited to ProcureMaster",
         react: TeamInviteEmail({
           orgName,
           inviterName: inviter.full_name,

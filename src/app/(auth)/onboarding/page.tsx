@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 
 import { OnboardingWizard } from '@/components/onboarding/onboarding-wizard'
+import { userNeedsPassword } from '@/lib/auth/needs-password'
 import { CURRENCIES } from '@/lib/schemas/organisation'
 import { createClient } from '@/lib/supabase/server'
 
@@ -15,6 +16,7 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
   const supabase = await createClient()
   const { data: userData } = await supabase.auth.getUser()
   if (!userData.user) redirect('/login')
+  if (await userNeedsPassword(userData.user.id)) redirect('/set-password') // S-1
 
   const { data: profile } = await supabase
     .from('profiles')

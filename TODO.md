@@ -36,6 +36,8 @@ Legend: `[ ]` todo · `[x]` done · **⛔ Gate** = decision needed before coding
 | 2026-10-14 | **P3-5** Team invites accepted at `/accept-invite/[token]` (full name + password), link valid 24 h, re-inviting re-sends. |
 | 2026-10-14 | **P3-6** Passwords: at least 8 characters, letters + digits (Supabase config + Zod). |
 | 2026-10-14 | **P3-7 (#40a)** Auth hook keeps only Supabase's provider fields plus our claims in `app_metadata`. |
+| 2026-10-14 | **S-1 (#48)** Signup collects no password; the confirmation link → `/set-password` (service-only `needs_password` flag, cleared on set; onboarding blocked until then). An unconfirmed, un-onboarded signup is replaced by a repeat signup (60 s cooldown → 429). Supersedes the password part of P3-1. |
+| 2026-10-14 | **S-2 (#49)** Invite emails capped at 20 per org per rolling 24 h (counted from `activity_log`); neutral subject "You've been invited to ProcureMaster"; user-supplied names only in the body. Phase 5 vendor invites must use the same limit. |
 | 2026-10-14 | **#34** Repo already exists — no `git init`; scaffold in a temp dir and copy in; single commit at the end of the verified phase. |
 
 ## Open items found beyond CLAUDE.md #1–23
@@ -64,6 +66,8 @@ Legend: `[ ]` todo · `[x]` done · **⛔ Gate** = decision needed before coding
 45. `PATCH /api/organisation` (multipart: name, currency, optional logo ≤ 2MB PNG/JPG/WebP) added in Phase 3 — not in Backend Schema §8; it routes org-profile changes through the API with an activity-log entry. Reused by `/settings/organisation` later.
 46. Supabase's admin API inserts auth.users, then writes `raw_app_meta_data` in a separate UPDATE, so the documented AFTER INSERT trigger never created profiles for API-created users. Fixed in 0028 (trigger also on app_metadata update, idempotent).
 47. Lint: `no-console` relaxed to allow `console.error` / `console.warn` (server error logging); `console.log` still warns.
+48. Security review (Phase 3 commit): account pre-hijacking — signup set a password before the email was proven. **Fixed by S-1.**
+49. Security review (Phase 3 commit): invite emails usable as a spam / phishing relay. **Fixed by S-2.**
 
 ---
 
@@ -166,7 +170,8 @@ Verify (2026-10-14 — headless Chromium against the **production build**, email
 - [x] Extra: role redirects (DH, FA, vendor, internal ↔ vendor) with toasts; wrong password; deactivated account; expired session; open-redirect payloads blocked
 - [x] 54/54 browser checks + 18 redirect-guard cases; Phase 2's 45 security checks re-run green; tsc / lint / build clean
 - [x] Fixed during verification: toasts fired on first page load were lost (Sonner subscribes after child effects); prefilled inputs rendered empty until hydration; `safeRedirectPath` hardened against tab/newline/backslash bypasses (security review)
-- [x] Commit
+- [x] Commit (550247e)
+- [x] Post-commit security fixes S-1 / S-2 (#48, #49): 66/66 browser checks against the production build
 
 ## Phase 4 — Navigation shell
 

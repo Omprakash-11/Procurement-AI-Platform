@@ -5,7 +5,7 @@ type TeamInviteEmailProps = { orgName: string; inviterName: string; roleLabel: s
 // Tech Stack §9.2 — PM invites an internal user (Department Head / Finance Approver).
 export default function TeamInviteEmail({ orgName, inviterName, roleLabel, acceptUrl }: TeamInviteEmailProps) {
   return (
-    <EmailLayout preview={`Join ${orgName} on ProcureMaster`} heading={`Join ${orgName} on ProcureMaster`}>
+    <EmailLayout preview="You've been invited to ProcureMaster" heading="You've been invited to ProcureMaster">
       <EmailText>
         {inviterName} has invited you to join {orgName} as a {roleLabel}.
       </EmailText>
