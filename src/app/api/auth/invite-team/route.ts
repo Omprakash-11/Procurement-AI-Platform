@@ -3,7 +3,8 @@ import { NextResponse } from 'next/server'
 import TeamInviteEmail from '@/emails/team-invite'
 import { logActivity } from '@/lib/activity'
 import { apiError, appUrl, requireUser, validationError } from '@/lib/api'
-import { INVITE_LIMIT_MESSAGE, remainingInvites } from '@/lib/auth/invite-limit'
+import { findAuthUserByEmail } from '@/lib/auth/find-user'
+import { INVITE_LIMIT_MESSAGE, reserveInviteEmail } from '@/lib/auth/invite-limit'
 import { issueTeamInviteToken } from '@/lib/auth/team-invite'
 import { sendEmail } from '@/lib/email/send'
 import { inviteTeamSchema } from '@/lib/schemas/auth'
@@ -40,18 +41,24 @@ export async function POST(request: Request) {
 
   const seen = new Set<string>()
   const results: InviteResult[] = []
-  let remaining = await remainingInvites(inviter.org_id) // S-2
 
   for (const row of parsed.data.invites) {
     const email = row.email.toLowerCase()
     if (seen.has(email)) continue
     seen.add(email)
 
-    if (remaining <= 0) {
+    // Reject addresses that can't be invited before spending quota on them.
+    const blocked = await existingAccountBlocks(email, inviter.org_id)
+    if (blocked) {
+      results.push({ email, status: 'error', message: blocked })
+      continue
+    }
+
+    // S-2 / #51: reserve the send atomically before creating anyone or emailing.
+    if (!(await reserveInviteEmail(inviter.org_id, auth.userId))) {
       results.push({ email, status: 'error', message: INVITE_LIMIT_MESSAGE })
       continue
     }
-    remaining -= 1
 
     const userId = await resolveInvitee(email, row.role, inviter.org_id)
     if ('error' in userId) {
@@ -92,6 +99,22 @@ export async function POST(request: Request) {
   return NextResponse.json({ results })
 }
 
+const ALREADY_HAS_ACCOUNT = 'This person already has a ProcureMaster account.'
+
+/** Only a still-pending invitee of this org may be re-invited. Looked up without issuing tokens (#52). */
+async function pendingInviteeOf(email: string, orgId: string) {
+  const user = await findAuthUserByEmail(email)
+  if (!user) return { user: null, pending: false, role: null }
+  const { data: profile } = await createAdminClient().from('profiles').select('org_id, role').eq('id', user.id).maybeSingle()
+  const pending = Boolean(profile && profile.org_id === orgId && (user.appMetadata.team_invite_hash || !user.emailConfirmed))
+  return { user, pending, role: profile?.role ?? null }
+}
+
+async function existingAccountBlocks(email: string, orgId: string): Promise<string | null> {
+  const { user, pending } = await pendingInviteeOf(email, orgId)
+  return user && !pending ? ALREADY_HAS_ACCOUNT : null
+}
+
 type Resolved = { id: string; created: boolean } | { error: string }
 
 async function resolveInvitee(email: string, role: 'department_head' | 'finance_approver', orgId: string): Promise<Resolved> {
@@ -107,19 +130,12 @@ async function resolveInvitee(email: string, role: 'department_head' | 'finance_
     return { error: 'We could not invite this person. Try again.' }
   }
 
-  // Existing account: only a still-pending invitee of this org can be re-invited.
-  // generateLink is used only to look the user up by email (the link itself is discarded).
-  const { data: link } = await admin.auth.admin.generateLink({ type: 'magiclink', email })
-  const user = link?.user
-  if (!user) return { error: 'We could not invite this person. Try again.' }
-
-  const { data: profile } = await admin.from('profiles').select('org_id, role').eq('id', user.id).maybeSingle()
-  const pending = Boolean((user.app_metadata as { team_invite_hash?: string }).team_invite_hash) || !user.email_confirmed_at
-  if (profile && profile.org_id === orgId && pending) {
-    if (profile.role !== role) {
-      await admin.from('profiles').update({ role }).eq('id', user.id)
-    }
-    return { id: user.id, created: false }
+  // Existing account (also covers a parallel request that created it first).
+  const existing = await pendingInviteeOf(email, orgId)
+  if (!existing.user) return { error: 'We could not invite this person. Try again.' }
+  if (!existing.pending) return { error: ALREADY_HAS_ACCOUNT }
+  if (existing.role !== role) {
+    await admin.from('profiles').update({ role }).eq('id', existing.user.id)
   }
-  return { error: 'This person already has a ProcureMaster account.' }
+  return { id: existing.user.id, created: false }
 }

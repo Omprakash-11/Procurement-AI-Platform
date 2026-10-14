@@ -38,6 +38,18 @@ Legend: `[ ]` todo · `[x]` done · **⛔ Gate** = decision needed before coding
 | 2026-10-14 | **P3-7 (#40a)** Auth hook keeps only Supabase's provider fields plus our claims in `app_metadata`. |
 | 2026-10-14 | **S-1 (#48)** Signup collects no password; the confirmation link → `/set-password` (service-only `needs_password` flag, cleared on set; onboarding blocked until then). An unconfirmed, un-onboarded signup is replaced by a repeat signup (60 s cooldown → 429). Supersedes the password part of P3-1. |
 | 2026-10-14 | **S-2 (#49)** Invite emails capped at 20 per org per rolling 24 h (counted from `activity_log`); neutral subject "You've been invited to ProcureMaster"; user-supplied names only in the body. Phase 5 vendor invites must use the same limit. |
+| 2026-10-14 | **S-1 refined (#52, #53, security review)** Repeat signup for a still-pending signup no longer deletes anything — it only re-sends the link to the same inbox (≤ 1/min, ≤ 5/day per signup); user lookups by email use a token-free DB function (0029); the confirmation email carries no user-supplied names. |
+| 2026-10-14 | **S-2 refined (#51, security review)** Each invite email is reserved atomically in the DB (0029: per-org advisory lock + ledger row `invite.email_sent`) before sending; addresses that can't be invited are rejected before spending quota. |
+| 2026-10-14 | **P4-1 (#17)** FA sidebar: Dashboard, Approvals, Activity (App Flow). |
+| 2026-10-14 | **P4-2 (#18)** Sidebar always visible (256px); no collapse state. |
+| 2026-10-14 | **P4-3 (#19)** Uppercase only where component specs say (table headers, kanban column titles, sidebar section labels). |
+| 2026-10-14 | **P4-4 (#27)** Semantic status tokens (success / warning / danger / info / neutral / ai; bg + fg) with light + dark values; light values = documented colours. |
+| 2026-10-14 | **P4-5 (#6)** `FileSignature` for contract records; Contracts nav stays `FileText`. |
+| 2026-10-14 | **P4-6** Theme switch (Light / Dark / System) in the avatar dropdown. |
+| 2026-10-14 | **P4-7** Sidebar keeps the ProcureMaster brand area; the org logo (if any) + name shown as a small row beneath it. |
+| 2026-10-14 | **P4-8 (#44, #50)** Phase 4 builds `/account` (name, photo, change password; email preferences wait for #15) and `/settings/organisation` (profile + Team: members list, invite / resend; Delete Organisation deferred). Scoring templates move to Phase 7. |
+| 2026-10-14 | **P4-9** Notification bell uses real `notifications` rows (GET + PATCH read-all) — no mock data. |
+| 2026-10-14 | **Default** Vendor shell shows the company name from the vendor's most recent invite. |
 | 2026-10-14 | **#34** Repo already exists — no `git init`; scaffold in a temp dir and copy in; single commit at the end of the verified phase. |
 
 ## Open items found beyond CLAUDE.md #1–23
@@ -68,6 +80,11 @@ Legend: `[ ]` todo · `[x]` done · **⛔ Gate** = decision needed before coding
 47. Lint: `no-console` relaxed to allow `console.error` / `console.warn` (server error logging); `console.log` still warns.
 48. Security review (Phase 3 commit): account pre-hijacking — signup set a password before the email was proven. **Fixed by S-1.**
 49. Security review (Phase 3 commit): invite emails usable as a spam / phishing relay. **Fixed by S-2.**
+50. Implementation Plan gap: `/account`, `/settings/organisation`, `/settings/scoring-templates` (App Flow §9) are built in no phase (Phase 4 only makes placeholders) → scheduled by P4-8.
+51. Security review (S-2 commit): invite cap could be overshot by parallel requests → **fixed** with atomic reservation (0029).
+52. Security review (S-2 commit): looking users up via admin generateLink invalidated outstanding emailed links → **fixed** with token-free `find_auth_user_by_email` (0029).
+53. Security review (S-1 commit): an unauthenticated repeat signup could delete someone's pending signup, and confirmation emails echoed attacker-chosen names → **fixed** (resend only, per-signup caps, neutral email).
+54. **Open for Phase 12:** no per-IP rate limiting (no Redis / queue infra by design). Use the Vercel firewall / rate-limit rules on `/api/auth/*` at deploy time.
 
 ---
 

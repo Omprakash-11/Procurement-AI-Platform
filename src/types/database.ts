@@ -1297,6 +1297,15 @@ export type Database = {
       }
       can_read_rfp: { Args: { p_rfp_id: string }; Returns: boolean }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
+      find_auth_user_by_email: {
+        Args: { p_email: string }
+        Returns: {
+          app_metadata: Json
+          created_at: string
+          email_confirmed: boolean
+          id: string
+        }[]
+      }
       get_org_id: { Args: Record<PropertyKey, never>; Returns: string }
       get_user_role: { Args: Record<PropertyKey, never>; Returns: string }
       get_user_type: { Args: Record<PropertyKey, never>; Returns: string }
@@ -1310,6 +1319,10 @@ export type Database = {
       process_contract_renewals: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      reserve_invite_email: {
+        Args: { p_actor_id: string; p_limit: number; p_org_id: string }
+        Returns: boolean
       }
     }
     Enums: {
