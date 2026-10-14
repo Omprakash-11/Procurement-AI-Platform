@@ -194,6 +194,8 @@ These were found while reading the docs. **Each one is a decision point** — wh
 - **#8–#12, #16** → see P2-7 … P2-9 in `TODO.md`: functions migration before RLS; requirements→rfps FK added in 0007; seed only in `supabase/seed.sql`; `set_updated_at` on the 15 tables with `updated_at`; NOT NULL FKs use NO ACTION; local workflow is `supabase db reset`.
 - **#13** → one `vendor_accounts` row per (org, email); vendor JWT has no `org_id`; vendor RLS keys on `auth.uid()` (P2-3).
 - **#14** → follow the Schema's JWT helper functions.
+- **#21** → public `/signup` creates only a new org + its PM, with email verification; internal users join via team invites at `/accept-invite/[token]` (P3-1, P3-2, P3-5).
+- **Auth emails** → our links + React Email via Resend; when Supabase is local they go to Mailpit (http://127.0.0.1:54324) instead (P3-3). Server-side account creation must go through the admin API with role/org in `app_metadata` (see #46 in `TODO.md`).
 - **Phase 2 security fixes** (P2-1, P2-2, P2-4, #39): admin-API-only account creation from `raw_app_meta_data`, public signup off; auth hook grants for `supabase_auth_admin`; vendors reach RFP/org/documents/storage only through service-role API routes; profile self-update limited to `full_name`/`avatar_url`.
 - **#20** → `popover` / `popover-foreground` mapped in `tailwind.config.ts`.
 - **New: Next.js version** → Next 15.5.27 + React 19.2.8, because every Next 14.2.x release has open critical/high advisories.

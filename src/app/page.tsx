@@ -1,4 +1,6 @@
-// Intentionally blank in Phase 1. App Flow: `/` redirects to `/login` — wired in Phase 3.
+import { redirect } from 'next/navigation'
+
+// App Flow: root (/) redirects to /login (middleware sends signed-in users on to their home).
 export default function HomePage() {
-  return null
+  redirect('/login')
 }

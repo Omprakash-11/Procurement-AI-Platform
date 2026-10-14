@@ -28,6 +28,14 @@ Legend: `[ ]` todo · `[x]` done · **⛔ Gate** = decision needed before coding
 | 2026-10-14 | **P2-8 (#8–#11)** Filenames kept, 0021 = functions, 0022 = RLS; requirements→rfps FK added in 0007; seed only in `supabase/seed.sql`; `set_updated_at` on the 15 tables with `updated_at`; trigger total 19. |
 | 2026-10-14 | **P2-9 (#16)** Local workflow: `supabase db reset` (migrations + seed); `supabase migration up` for increments. |
 | 2026-10-14 | **P2-10** Seed users `pm@ / dh@ / fa@ / vendor1@ / vendor2@procuremaster.test`, password `Password123!` (local only). |
+| 2026-10-14 | **#39 confirmed** — profile self-update limited to `full_name` / `avatar_url`. |
+| 2026-10-14 | **P3-1 (#21)** Public `/signup` creates only a NEW org + its PM (role forced server-side). Fields: full name, work email, org name, password, confirm. No signup link on `/login`. |
+| 2026-10-14 | **P3-2** Signup requires email verification: "check your email" → `/auth/confirm` link → signed in at `/onboarding`. |
+| 2026-10-14 | **P3-3** Auth emails = our one-time links (Supabase admin API) + React Email templates via Resend; when Supabase is local, the same emails go to Mailpit's HTTP API instead. No new package. |
+| 2026-10-14 | **P3-4** Forgot password = modal on `/login`; `/reset-password` (no token) → `/login`; `/reset-password/[token]` link valid 60 min. |
+| 2026-10-14 | **P3-5** Team invites accepted at `/accept-invite/[token]` (full name + password), link valid 24 h, re-inviting re-sends. |
+| 2026-10-14 | **P3-6** Passwords: at least 8 characters, letters + digits (Supabase config + Zod). |
+| 2026-10-14 | **P3-7 (#40a)** Auth hook keeps only Supabase's provider fields plus our claims in `app_metadata`. |
 | 2026-10-14 | **#34** Repo already exists — no `git init`; scaffold in a temp dir and copy in; single commit at the end of the verified phase. |
 
 ## Open items found beyond CLAUDE.md #1–23
@@ -48,10 +56,14 @@ Legend: `[ ]` todo · `[x]` done · **⛔ Gate** = decision needed before coding
 37. `handle_new_user` trusted client-controlled `raw_user_meta_data` for role/org → resolved by P2-1.
 38. Schema vendor storage read policy matched the whole org folder (other vendors' proposals); `documents_vendor_own` exposed AI extraction → resolved by P2-4.
 39. `profiles_self_update` allowed changing own `role` / `org_id` / `is_active`. **Applied in Phase 2 pending user confirmation:** column privileges restrict self-updates to `full_name` and `avatar_url`.
-40. Open for Phase 3+: JWT `app_metadata` also carries `org_name` / `full_name` copied from `raw_app_meta_data` at account creation (harmless, but stale after renames). `activity_log` stays readable by all internal users in the org (Schema §5.9), including before/after state of scores — wider than P2-6's DH/FA scoping.
+40. ~~JWT `app_metadata` carries `org_name` / `full_name`~~ → resolved by P3-7 (0028). **Still open (decide by Phase 9):** `activity_log` stays readable by all internal users in the org (Schema §5.9), including before/after state of scores — wider than P2-6's DH/FA scoping.
 41. Security review (after the Phase 2 commit): approval policies let a PM set status = 'approved' (self-approval → contract) and let an FA rewrite rfp/vendor/evaluation or decide requests not sent to them. **Fixed in 0027**: per-role WITH CHECK transitions, column-level UPDATE grants, and the contract trigger requires an active FA decider.
 42. Security review: a DH could set linked_rfp_id on their own requirement to gain read access to any RFP. **Fixed in 0027**: can_read_rfp uses only the PM-controlled rfps.requirement_id; DH policies require linked_rfp_id IS NULL.
 43. Security review: RLS checked a row's own org_id, not its parents'; a known foreign UUID could attach rows to another tenant. **Fixed in 0027**: enforce_same_org() trigger on 14 tables checks every parent reference (applies to the service role too).
+44. **Open for Phase 4:** App Flow has no screen for inviting team members after onboarding (Settings covers only the org profile and scoring templates). `POST /api/auth/invite-team` already supports it.
+45. `PATCH /api/organisation` (multipart: name, currency, optional logo ≤ 2MB PNG/JPG/WebP) added in Phase 3 — not in Backend Schema §8; it routes org-profile changes through the API with an activity-log entry. Reused by `/settings/organisation` later.
+46. Supabase's admin API inserts auth.users, then writes `raw_app_meta_data` in a separate UPDATE, so the documented AFTER INSERT trigger never created profiles for API-created users. Fixed in 0028 (trigger also on app_metadata update, idempotent).
+47. Lint: `no-console` relaxed to allow `console.error` / `console.warn` (server error logging); `console.log` still warns.
 
 ---
 
@@ -130,23 +142,31 @@ Verify (2026-10-14):
 
 ⛔ Gates: #21 (how the first PM reaches `/signup`), #7, team-invite "pending profile" before the auth user exists, reset-password route shape vs Supabase's code flow.
 
-- [ ] `/login`, `/reset-password`, `/reset-password/[token]` pages (App Flow §3)
-- [ ] `src/middleware.ts` — protect `(dashboard)` and `/vendor`, role-based redirects
-- [ ] `POST /api/auth/signup`, `POST /api/auth/invite-team`, `PATCH /api/auth/onboarding/complete`
-- [ ] Onboarding wizard `/onboarding?step=1..3` with guard
-- [ ] Zustand stores `useAppStore`, `useNotificationStore`
-- [ ] Providers: `query-provider.tsx`, `auth-provider.tsx`; wrap root layout
-- [ ] `src/types/database.ts` (generated) + `src/types/index.ts`
+- [x] `/login` (+ forgot-password modal, P3-4), `/signup` (P3-1), `/reset-password` → `/login`, `/reset-password/[token]`, `/accept-invite/[token]` (P3-5), `/auth/confirm` (P3-2)
+- [x] `src/middleware.ts` — protects `(dashboard)` and `/vendor`; signed-in users sent home from `/login` / `/signup`; vendor ↔ internal separation; per-role route rules (App Flow §1, incl. DH report-only); deactivated → sign out + message; expired session → `?reason=expired`; `redirectTo` limited to same-origin paths
+- [x] `POST /api/auth/signup`, `POST /api/auth/invite-team`, `POST /api/auth/accept-invite`, `POST /api/auth/reset-password` (+ `/confirm`), `PATCH /api/auth/onboarding/complete`, `PATCH /api/organisation` (#45)
+- [x] Onboarding wizard `/onboarding?step=1..3` with guard (PM-only; locked after completion; dashboard redirects there until done)
+- [x] Zustand stores `useAppStore` (modal, search — the sidebar flag waits for #18 in Phase 4), `useNotificationStore`
+- [x] Providers: `query-provider.tsx`, `auth-provider.tsx`; root layout also mounts the Sonner `<Toaster>`
+- [x] `src/types/database.ts` (regenerated) + `src/types/index.ts`
+- [x] Email: `src/lib/email/send.ts` (Resend; Mailpit when Supabase is local, P3-3) + templates `password-reset.tsx`, `team-invite.tsx`, `signup-confirmation.tsx`
+- [x] `src/lib/activity.ts` `logActivity()` created early (CLAUDE.md requires it on every state change; originally a Phase 9 task)
+- [x] Migration `0028_auth_flow_fixes.sql` (#46 profile trigger on app_metadata update; P3-7 token whitelist)
+- [x] Config: password rules (P3-6), `site_url` = `http://localhost:3000`
+- [x] shadcn button / input / card aligned to Content Guidelines §6.1 / §6.2 / §6.4; shared `FormField` + `SubmitButton`
 
-Verify:
-- [ ] Unauthenticated `/dashboard` → `/login`
-- [ ] PM signup creates org + profile
-- [ ] JWT `app_metadata` has `user_type`, `role`, `org_id`
-- [ ] Onboarding sets `onboarding_complete = true`
-- [ ] Password reset email sends (local mail catcher)
-- [ ] Invited team member receives email and sets password
-- [ ] Auth routes return correct status codes
-- [ ] Commit
+Verify (2026-10-14 — headless Chromium against the **production build**, emails read from Mailpit):
+- [x] Unauthenticated `/dashboard` → `/login` (with `redirectTo`); `/` → `/login`
+- [x] PM signup creates org + profile (after the #46 fix); email must be confirmed first
+- [x] JWT `app_metadata` has `user_type`, `role`, `org_id` — and nothing else of ours (P3-7)
+- [x] Onboarding sets `onboarding_complete = true`; `/onboarding` locked afterwards; dashboard redirects to onboarding until done
+- [x] Password reset email sends (Mailpit); new password works; reused link → expired state; unknown email still 200
+- [x] Invited team member receives email, sets name + password, lands on `/dashboard`; link single-use
+- [x] Auth routes return correct status codes (401 / 403 / 400 / 409 / 410, `{ error, code }` shape)
+- [x] Extra: role redirects (DH, FA, vendor, internal ↔ vendor) with toasts; wrong password; deactivated account; expired session; open-redirect payloads blocked
+- [x] 54/54 browser checks + 18 redirect-guard cases; Phase 2's 45 security checks re-run green; tsc / lint / build clean
+- [x] Fixed during verification: toasts fired on first page load were lost (Sonner subscribes after child effects); prefilled inputs rendered empty until hydration; `safeRedirectPath` hardened against tab/newline/backslash bypasses (security review)
+- [x] Commit
 
 ## Phase 4 — Navigation shell
 

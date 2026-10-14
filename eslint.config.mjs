@@ -13,7 +13,8 @@ const eslintConfig = [
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
   {
     rules: {
-      'no-console': 'warn',
+      // Tech Stack §13.2: no debug logs. Server-side error logging stays allowed so failures are never silent.
+      'no-console': ['warn', { allow: ['error', 'warn'] }],
     },
   },
   {

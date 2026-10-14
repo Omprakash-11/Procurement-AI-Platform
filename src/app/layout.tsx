@@ -1,7 +1,10 @@
 import type { Metadata } from 'next'
 import { Cal_Sans, Inter, JetBrains_Mono } from 'next/font/google'
 
+import { AuthProvider } from '@/components/providers/auth-provider'
+import { QueryProvider } from '@/components/providers/query-provider'
 import { ThemeProvider } from '@/components/providers/theme-provider'
+import { Toaster } from '@/components/ui/sonner'
 import { cn } from '@/lib/utils'
 
 import './globals.css'
@@ -46,7 +49,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     >
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {children}
+          <QueryProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </QueryProvider>
+          {/* Content Guidelines §6.8: top-right, max 3 stacked, close button */}
+          <Toaster position="top-right" visibleToasts={3} closeButton />
         </ThemeProvider>
       </body>
     </html>
