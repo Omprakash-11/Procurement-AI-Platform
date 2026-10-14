@@ -8,9 +8,8 @@ import { sendEmail } from '@/lib/email/send'
 import { signupSchema } from '@/lib/schemas/auth'
 import { createAdminClient } from '@/lib/supabase/server'
 
-const RESEND_COOLDOWN_MS = 60_000
+const RESEND_COOLDOWN_SECONDS = 60
 const MAX_CONFIRMATIONS_PER_DAY = 5
-const CONFIRMATION_ACTION = 'signup.confirmation_sent'
 
 // POST /api/auth/signup — Backend Schema §8.1. Decisions P3-1 / P3-2 / P2-1 / S-1 (#48, #53):
 // creates a NEW organisation with its PM (role forced here) as an unconfirmed user with NO
@@ -33,9 +32,9 @@ export async function POST(request: Request) {
         fields: { email: ['An account with this email already exists. Sign in instead.'] },
       })
     }
-    const limited = await confirmationRateLimited(pendingOrgId)
+    const limited = await reserveConfirmation(pendingOrgId, existing.id)
     if (limited) return apiError(429, 'too_many_requests', limited)
-    await sendConfirmation(email, pendingOrgId, existing.id)
+    await sendConfirmation(email)
     return NextResponse.json({ status: 'confirmation_sent' }, { status: 201 })
   }
 
@@ -69,7 +68,7 @@ export async function POST(request: Request) {
     description: `${fullName} created the ${orgName} organisation`,
     after: { name: orgName },
   })
-  await sendConfirmation(email, profile.org_id, userId)
+  if (!(await reserveConfirmation(profile.org_id, userId))) await sendConfirmation(email)
 
   return NextResponse.json({ status: 'confirmation_sent' }, { status: 201 })
 }
@@ -86,38 +85,33 @@ async function pendingSignupOrg(userId: string, emailConfirmed: boolean, appMeta
   return profile.org_id
 }
 
-/** Per-recipient cap: each pending signup has its own org, so count that org's sends. */
-async function confirmationRateLimited(orgId: string): Promise<string | null> {
-  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-  const { data } = await createAdminClient()
-    .from('activity_log')
-    .select('created_at')
-    .eq('org_id', orgId)
-    .eq('action', CONFIRMATION_ACTION)
-    .gte('created_at', since)
-    .order('created_at', { ascending: false })
-  const sends = data ?? []
-  if (sends.length >= MAX_CONFIRMATIONS_PER_DAY) return 'Too many confirmation emails today. Check your inbox or try again tomorrow.'
-  const last = sends[0]?.created_at
-  if (last && Date.now() - Date.parse(last) < RESEND_COOLDOWN_MS) return 'Please wait a minute before trying again.'
+/**
+ * Per-recipient cap (each pending signup has its own org). Reserved atomically in the DB
+ * (migration 0030, #56) before any link or email is made. Returns an error message, or
+ * null when the send may go ahead. Fails closed.
+ */
+async function reserveConfirmation(orgId: string, userId: string): Promise<string | null> {
+  const { data, error } = await createAdminClient().rpc('reserve_signup_confirmation', {
+    p_org_id: orgId,
+    p_user_id: userId,
+    p_daily_limit: MAX_CONFIRMATIONS_PER_DAY,
+    p_cooldown_seconds: RESEND_COOLDOWN_SECONDS,
+  })
+  if (error) {
+    console.error('signup: confirmation reservation failed', error.message)
+    return 'We could not send the email right now. Please try again shortly.'
+  }
+  if (data === 'daily_limit') return 'Too many confirmation emails today. Check your inbox or try again tomorrow.'
+  if (data === 'cooldown') return 'Please wait a minute before trying again.'
   return null
 }
 
-async function sendConfirmation(email: string, orgId: string, userId: string) {
+async function sendConfirmation(email: string) {
   const { data, error } = await createAdminClient().auth.admin.generateLink({ type: 'magiclink', email })
   if (error || !data.properties?.hashed_token) {
     console.error('signup: could not generate confirmation link', error?.message)
     return
   }
-  await logActivity({
-    orgId,
-    actorId: userId,
-    actorType: 'system',
-    entityType: 'profile',
-    entityId: userId,
-    action: CONFIRMATION_ACTION,
-    description: 'Signup confirmation email sent',
-  })
   const confirmUrl = appUrl(`/auth/confirm?token_hash=${encodeURIComponent(data.properties.hashed_token)}&next=/set-password`)
   try {
     await sendEmail({

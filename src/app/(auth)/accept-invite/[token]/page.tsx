@@ -4,15 +4,9 @@ import { AcceptInviteForm } from '@/components/auth/accept-invite-form'
 import { Card, CardDescription, CardHeader } from '@/components/ui/card'
 import { verifyTeamInviteToken } from '@/lib/auth/team-invite'
 import { createAdminClient } from '@/lib/supabase/server'
-import type { UserRole } from '@/types'
+import { ROLE_LABELS } from '@/lib/roles'
 
 export const metadata: Metadata = { title: 'Accept invite — ProcureMaster' }
-
-const ROLE_LABELS: Record<UserRole, string> = {
-  procurement_manager: 'Procurement Manager',
-  department_head: 'Department Head',
-  finance_approver: 'Finance Approver',
-}
 
 type AcceptInvitePageProps = { params: Promise<{ token: string }> }
 

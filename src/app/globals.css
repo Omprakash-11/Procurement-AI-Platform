@@ -24,9 +24,37 @@
     --border: 214 32% 91%;
     --input: 214 32% 91%;
     --ring: 225 73% 47%;
+
+    /* Status badges (decision P4-4). Light values = Content Guidelines §2.3 / §6.3 colours. */
+    /* Exact conversions of the documented hex values (round-trip verified). */
+    --status-success: 140.6 84.2% 92.5%;     /* green-100  #DCFCE7 */
+    --status-success-fg: 142.8 64.2% 24.1%;  /* green-800  #166534 */
+    --status-warning: 48 96.5% 88.8%;        /* amber-100  #FEF3C7 */
+    --status-warning-fg: 22.7 82.5% 31.4%;   /* amber-800  #92400E */
+    --status-danger: 0 93.3% 94.1%;          /* red-100    #FEE2E2 */
+    --status-danger-fg: 0 70% 35.3%;         /* red-800    #991B1B */
+    --status-info: 214.3 94.6% 92.7%;        /* blue-100   #DBEAFE */
+    --status-info-fg: 225.9 70.7% 40.2%;     /* blue-800   #1E40AF */
+    --status-neutral: 210 40% 96.1%;         /* slate-100  #F1F5F9 */
+    --status-neutral-fg: 215.3 25% 26.7%;    /* slate-700  #334155 */
+    --status-ai: 251.4 91.3% 95.5%;          /* violet-100 #EDE9FE */
+    --status-ai-fg: 263.4 69.3% 42.2%;       /* violet-800 #5B21B6 */
   }
 
   .dark {
+    --status-success: 144 61% 15%;
+    --status-success-fg: 142 77% 73%;
+    --status-warning: 22 78% 16%;
+    --status-warning-fg: 46 97% 65%;
+    --status-danger: 0 63% 18%;
+    --status-danger-fg: 0 94% 82%;
+    --status-info: 224 64% 20%;
+    --status-info-fg: 213 97% 78%;
+    --status-neutral: 215 25% 22%;
+    --status-neutral-fg: 213 27% 84%;
+    --status-ai: 263 60% 22%;
+    --status-ai-fg: 252 95% 85%;
+
     --background: 222 47% 5%;
     --foreground: 210 40% 98%;
     --card: 222 47% 11%;

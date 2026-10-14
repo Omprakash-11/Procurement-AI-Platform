@@ -1324,6 +1324,15 @@ export type Database = {
         Args: { p_actor_id: string; p_limit: number; p_org_id: string }
         Returns: boolean
       }
+      reserve_signup_confirmation: {
+        Args: {
+          p_cooldown_seconds: number
+          p_daily_limit: number
+          p_org_id: string
+          p_user_id: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       activity_entity:

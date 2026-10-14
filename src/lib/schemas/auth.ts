@@ -54,6 +54,22 @@ export const acceptInviteRequestSchema = z.object({
   password: passwordSchema,
 })
 
+// /account (App Flow §9.1)
+export const accountProfileSchema = z.object({
+  fullName: z.string().trim().min(1, 'Full name is required.').max(120),
+})
+export type AccountProfileFormValues = z.infer<typeof accountProfileSchema>
+
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Enter your current password.'),
+    password: passwordSchema,
+    confirmPassword: z.string().min(1, 'Confirm your new password.'),
+  })
+  .refine((v) => v.password === v.confirmPassword, { message: 'Passwords do not match.', path: ['confirmPassword'] })
+export type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>
+export const changePasswordRequestSchema = z.object({ currentPassword: z.string().min(1), password: passwordSchema })
+
 export const INVITABLE_ROLES = ['department_head', 'finance_approver'] as const
 export const MAX_TEAM_INVITES = 10 // App Flow §3.1 step 2
 

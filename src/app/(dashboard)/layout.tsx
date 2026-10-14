@@ -1,24 +1,25 @@
 import { redirect } from 'next/navigation'
 import type { ReactNode } from 'react'
 
-import { getAppClaims } from '@/lib/auth/claims'
-import { createClient } from '@/lib/supabase/server'
+import { Sidebar } from '@/components/layout/sidebar'
+import { TopBar } from '@/components/layout/top-bar'
+import { getShellUser } from '@/lib/auth/current-user'
 
-// Internal app shell. Phase 3: auth + onboarding guard only — the sidebar / top bar shell
-// is built in Phase 4. App Flow §3.1: the PM's onboarding runs before the dashboard.
+// Internal app shell — Content Guidelines §5.1: grid of a fixed 256px sidebar and the content
+// column, with the top bar sticky above the content. App Flow §3.1: a PM's onboarding runs
+// before the dashboard is reachable.
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
-  const supabase = await createClient()
-  const { data: userData } = await supabase.auth.getUser()
-  if (!userData.user) redirect('/login')
+  const user = await getShellUser()
+  if (!user) redirect('/login')
+  if (user.role === 'procurement_manager' && !user.onboardingComplete) redirect('/onboarding')
 
-  const { data: sessionData } = await supabase.auth.getSession()
-  const claims = getAppClaims(sessionData.session?.access_token)
-  if (claims.user_type !== 'internal') redirect('/login')
-
-  if (claims.role === 'procurement_manager') {
-    const { data: profile } = await supabase.from('profiles').select('onboarding_complete').eq('id', userData.user.id).single()
-    if (profile && !profile.onboarding_complete) redirect('/onboarding')
-  }
-
-  return <>{children}</>
+  return (
+    <div className="grid min-h-screen grid-cols-[256px_1fr] bg-background">
+      <Sidebar user={user} />
+      <div className="flex min-w-0 flex-col">
+        <TopBar user={user} />
+        <main className="flex-1">{children}</main>
+      </div>
+    </div>
+  )
 }

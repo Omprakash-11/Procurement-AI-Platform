@@ -71,7 +71,7 @@ export function LoginForm({ redirectTo, reason }: LoginFormProps) {
         <CardDescription>Use your work email and password.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={onSubmit} noValidate className="space-y-5">
+        <form method="post" onSubmit={onSubmit} noValidate className="space-y-5">
           {formError && (
             <p role="alert" className="flex items-start gap-2 rounded border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
               <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />

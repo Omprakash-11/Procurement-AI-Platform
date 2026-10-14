@@ -9,13 +9,7 @@ import { issueTeamInviteToken } from '@/lib/auth/team-invite'
 import { sendEmail } from '@/lib/email/send'
 import { inviteTeamSchema } from '@/lib/schemas/auth'
 import { createAdminClient } from '@/lib/supabase/server'
-import type { UserRole } from '@/types'
-
-const ROLE_LABELS: Record<UserRole, string> = {
-  procurement_manager: 'Procurement Manager',
-  department_head: 'Department Head',
-  finance_approver: 'Finance Approver',
-}
+import { ROLE_LABELS } from '@/lib/roles'
 
 type InviteResult = { email: string; status: 'sent' | 'error'; message?: string }
 

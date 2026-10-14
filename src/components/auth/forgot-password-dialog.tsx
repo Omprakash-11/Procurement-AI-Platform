@@ -67,7 +67,7 @@ export function ForgotPasswordDialog() {
             </DialogFooter>
           </>
         ) : (
-          <form onSubmit={onSubmit} noValidate className="space-y-5">
+          <form method="post" onSubmit={onSubmit} noValidate className="space-y-5">
             <FormField id="reset-email" label="Email" required error={errors.email?.message}>
               <Input type="email" autoComplete="email" {...fieldA11y('reset-email', errors.email?.message)} {...form.register('email')} />
             </FormField>

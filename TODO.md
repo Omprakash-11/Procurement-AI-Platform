@@ -85,6 +85,10 @@ Legend: `[ ]` todo · `[x]` done · **⛔ Gate** = decision needed before coding
 52. Security review (S-2 commit): looking users up via admin generateLink invalidated outstanding emailed links → **fixed** with token-free `find_auth_user_by_email` (0029).
 53. Security review (S-1 commit): an unauthenticated repeat signup could delete someone's pending signup, and confirmation emails echoed attacker-chosen names → **fixed** (resend only, per-signup caps, neutral email).
 54. **Open for Phase 12:** no per-IP rate limiting (no Redis / queue infra by design). Use the Vercel firewall / rate-limit rules on `/api/auth/*` at deploy time.
+55. Profile photos have no bucket in Backend Schema §9 → stored in the private `org-assets` bucket at `{org_id}/avatars/{user_id}.{ext}` (org-scoped, per CLAUDE.md).
+56. Security review: signup-confirmation resend caps could be raced by parallel requests → **fixed** with an atomic DB reservation (0030), fail-closed.
+57. Found in Phase 4 testing: submitting a form before hydration did a native GET, putting the email and **password in the URL** (history, logs, Referer). **Fixed:** every form uses `method="post"`, and submit buttons stay disabled until hydrated.
+58. Found in Phase 4 testing: Sign Out cleared the session but left the user on the (stale) page — the auth listener's refresh cancelled the redirect. **Fixed** with a full page load to `/login`.
 
 ---
 
@@ -194,23 +198,27 @@ Verify (2026-10-14 — headless Chromium against the **production build**, email
 
 ⛔ Gates: #6 (`FileContract` icon), #17 (FA Activity item), #18 (sidebar collapse state), #19 (uppercase labels), #27 (badge dark mode), #15 (sparkline history data).
 
-- [ ] `(dashboard)/layout.tsx` grid shell (256px sidebar + sticky top bar)
-- [ ] `sidebar.tsx`, `top-bar.tsx`, `breadcrumb.tsx`, `page-header.tsx`, `vendor-shell.tsx`
-- [ ] `vendor/layout.tsx`
-- [ ] Placeholder pages: dashboard (role-aware), pipeline, requirements, approvals, contracts, activity, settings ×2, vendor home
-- [ ] Notification bell dropdown (`GET /api/notifications` mock), mark all read
-- [ ] Avatar dropdown with sign out
-- [ ] Global search overlay UI (no API yet)
+- [x] `(dashboard)/layout.tsx` grid shell (256px sidebar + sticky top bar) + PM onboarding guard
+- [x] `sidebar.tsx` (role nav P4-1, org row P4-7, never collapses P4-2), `top-bar.tsx`, `breadcrumb.tsx`, `page-header.tsx`, `vendor-shell.tsx`, `avatar-menu.tsx` (theme switch P4-6), `notification-bell.tsx`, `global-search.tsx`
+- [x] `vendor/(portal)/layout.tsx` — route group so `/vendor/invite/*` stays shell-less; company name from the most recent invite
+- [x] Placeholder pages: dashboard (role-aware), pipeline, requirements, approvals, contracts, activity, search, scoring templates, vendor home
+- [x] Notification bell: real rows (P4-9) — `GET /api/notifications`, `PATCH /api/notifications/read-all`, per-item read on click, 30 s polling, deep links
+- [x] Avatar dropdown: name, email, My Account, Theme, Sign Out (full page load to `/login`)
+- [x] Global search overlay UI (300 ms debounce, categories, "See all results" → `/search?q=`)
+- [x] `/settings/organisation` (profile + Team: list, invite, resend — fixes #44) and `/account` (name, photo, change password) per P4-8
+- [x] Status tokens (P4-4) + `StatusBadge`; generic `DataTable` (TanStack + shadcn, uppercase headers P4-3, empty spacer row)
+- [x] `src/lib/roles.ts` (client-safe role labels / initials)
 
-Verify:
-- [ ] PM sees all sidebar items; DH hides Pipeline/Contracts; FA per gate #17
-- [ ] Vendor portal has no sidebar
-- [ ] Breadcrumb only on nested pages
-- [ ] Avatar shows name/email; sign out → `/login`
-- [ ] Bell renders badge (even at 0)
-- [ ] No hex values in components
-- [ ] Dark mode switches the whole shell
-- [ ] Commit
+Verify (2026-10-14 — headless Chromium against the production build):
+- [x] PM sees Dashboard, Pipeline, Requirements, Contracts, Activity + Settings; DH hides Pipeline/Contracts; FA = Dashboard, Approvals, Activity (P4-1)
+- [x] Vendor portal has no sidebar; company name shown; avatar menu = Sign Out only
+- [x] Breadcrumb only on nested pages (`Settings > Organisation`; none on `/dashboard`)
+- [x] Avatar shows name/email; sign out → `/login` with the session cleared
+- [x] Bell renders badge (even at 0); real counts; deep link + mark read; mark all read; scoped to recipient
+- [x] No hex values / raw `dark:` colours in components (emails excepted)
+- [x] Dark mode switches the whole shell (sidebar + page) and persists
+- [x] Extra: settings team invite / resend, org save → sidebar updates, account name/photo/password, search overlay, badge colours exact, FA blocked from settings, no-JS submit leaks nothing (#57), signup resend race (#56)
+- [x] Commit
 
 ## Phase 5 — PM core: pipeline & RFPs
 

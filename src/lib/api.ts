@@ -14,6 +14,8 @@ export function validationError(err: ZodError) {
   return apiError(400, 'validation_error', 'Some fields are invalid.', { fields: err.flatten().fieldErrors })
 }
 
+export const INTERNAL_ROLES: UserRole[] = ['procurement_manager', 'department_head', 'finance_approver']
+
 type AuthOk = {
   ok: true
   supabase: Awaited<ReturnType<typeof createClient>>

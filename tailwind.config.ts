@@ -5,6 +5,7 @@ import tailwindcssAnimate from 'tailwindcss-animate'
 // - popover colours mapped (D5 / #20)
 // - mono uses the next/font variable for JetBrains Mono (D3)
 // - `dark` safelisted so the §15 dark tokens survive purging
+// - status badge colours (P4-4)
 // - plugin loaded with an ES import instead of require() (same plugin; require() fails the next/typescript lint rules)
 const config: Config = {
   darkMode: ['class'],
@@ -39,6 +40,15 @@ const config: Config = {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
+        // Decision P4-4: status badge tokens with light + dark values (globals.css)
+        status: {
+          success: { DEFAULT: 'hsl(var(--status-success))', foreground: 'hsl(var(--status-success-fg))' },
+          warning: { DEFAULT: 'hsl(var(--status-warning))', foreground: 'hsl(var(--status-warning-fg))' },
+          danger: { DEFAULT: 'hsl(var(--status-danger))', foreground: 'hsl(var(--status-danger-fg))' },
+          info: { DEFAULT: 'hsl(var(--status-info))', foreground: 'hsl(var(--status-info-fg))' },
+          neutral: { DEFAULT: 'hsl(var(--status-neutral))', foreground: 'hsl(var(--status-neutral-fg))' },
+          ai: { DEFAULT: 'hsl(var(--status-ai))', foreground: 'hsl(var(--status-ai-fg))' },
+        },
       },
       boxShadow: {
         sm: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
