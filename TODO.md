@@ -50,6 +50,14 @@ Legend: `[ ]` todo · `[x]` done · **⛔ Gate** = decision needed before coding
 | 2026-10-14 | **P4-8 (#44, #50)** Phase 4 builds `/account` (name, photo, change password; email preferences wait for #15) and `/settings/organisation` (profile + Team: members list, invite / resend; Delete Organisation deferred). Scoring templates move to Phase 7. |
 | 2026-10-14 | **P4-9** Notification bell uses real `notifications` rows (GET + PATCH read-all) — no mock data. |
 | 2026-10-14 | **Default** Vendor shell shows the company name from the vendor's most recent invite. |
+| 2026-10-14 | **P5-1** Kanban: PM drags between working stages (Requirements Received → Shortlisted, either way). Approval Pending / Contracted refuse drops; Archived only via "Archive RFP" + confirmation; locked stages can't be dragged out. Events auto-advance (first invite → Vendors Invited). |
+| 2026-10-14 | **P5-2** "Requirements Received" shows submitted requirements without an RFP as requirement cards → `/requirements/[id]` → PM "Create RFP" (modal prefilled) links them and sets the requirement In Progress. |
+| 2026-10-14 | **P5-3** Department = text input with suggestions from departments already used in the org. |
+| 2026-10-14 | **P5-4 (#15)** Sparklines = daily counts of related `activity_log` events, last 30 days. |
+| 2026-10-14 | **P5-5** "Remove" vendor only while Invited: expires pending invites, entry → Not Selected (kept as history, labelled "Removed"). |
+| 2026-10-14 | **P5-6** Shortlist toggle once submitted (Shortlisted ↔ Under Review). Vendors emailed only on Shortlisted / Not Selected / Contracted, at most once per status per RFP. |
+| 2026-10-14 | **Defaults (P5)** Pipeline date filter = submission deadline; dashboard renewal + activity panels use real data now; vendor invites share the S-2 quota; 64-char tokens, 72 h. |
+| 2026-10-14 | **CLAUDE.md over Tech Stack §8.2** Kanban optimistic updates live in the TanStack Query cache, not Zustand ("never put API data in Zustand"). |
 | 2026-10-14 | **#34** Repo already exists — no `git init`; scaffold in a temp dir and copy in; single commit at the end of the verified phase. |
 
 ## Open items found beyond CLAUDE.md #1–23
@@ -89,6 +97,7 @@ Legend: `[ ]` todo · `[x]` done · **⛔ Gate** = decision needed before coding
 56. Security review: signup-confirmation resend caps could be raced by parallel requests → **fixed** with an atomic DB reservation (0030), fail-closed.
 57. Found in Phase 4 testing: submitting a form before hydration did a native GET, putting the email and **password in the URL** (history, logs, Referer). **Fixed:** every form uses `method="post"`, and submit buttons stay disabled until hydrated.
 58. Found in Phase 4 testing: Sign Out cleared the session but left the user on the (stale) page — the auth listener's refresh cancelled the redirect. **Fixed** with a full page load to `/login`.
+59. Security review (Phase 4 commit): `avatar_url` was client-writable and signed with the service role → cross-tenant storage read. **Fixed:** stored paths must match the exact own-org shape before signing; column UPDATE revoked (0031).
 
 ---
 
@@ -224,26 +233,28 @@ Verify (2026-10-14 — headless Chromium against the production build):
 
 ⛔ Gates: #13 (re-inviting a vendor across RFPs), kanban drag semantics (RFP status is per-RFP but vendor stages are per-vendor), dev email delivery only to the Resend owner address (how to test invites).
 
-- [ ] Zod schemas `rfp.ts`, `vendor-invite.ts`
-- [ ] `/api/rfps` (GET, POST), `/api/rfps/[id]` (GET, PATCH, DELETE soft), `/api/rfps/[id]/invite-vendor`
-- [ ] `src/emails/vendor-invite.tsx`
-- [ ] PM dashboard: 4 stat cards, pipeline snapshot, renewal & activity panels (empty for now)
-- [ ] Kanban: 9 columns, dnd-kit, cards, drag → PATCH status, filters, search
-- [ ] Create RFP modal (RHF + Zod), toast on success
-- [ ] RFP detail split view (35/65), vendor list table, invite modal
-- [ ] Vendor detail page placeholder with 4 tabs
-- [ ] TanStack Query hooks in `src/lib/queries/`
-- [ ] `logActivity()` + notifications on state changes (per CLAUDE.md)
+- [x] Zod schemas `rfp.ts`, `vendor-invite.ts`
+- [x] `/api/rfps` (GET with filters + pending requirements, POST incl. from requirement), `/api/rfps/[id]` (GET, PATCH with P5-1 rules, DELETE soft), `/api/rfps/[id]/invite-vendor`, `/api/rfps/[id]/vendors/[entryId]` (remove / shortlist — not in Schema §8, added for App Flow actions)
+- [x] Emails `vendor-invite.tsx`, `vendor-status-update.tsx` (+ once-per-outcome sender, P5-6)
+- [x] PM dashboard: 4 stat cards with activity sparklines (P5-4), pipeline snapshot, renewal alerts + recent activity on real data
+- [x] Kanban: 9 columns, dnd-kit (pointer + keyboard: Space drag, Enter opens), drop rules (P5-1), requirement cards (P5-2), filters, inline search
+- [x] Create / Edit RFP modal (RHF + Zod, department suggestions P5-3, native date input), toast on success
+- [x] RFP detail split view (35/65): inline title edit, edit modal, invite modal, archive confirm, Start Evaluation gating; vendor list (DataTable) with shortlist / remove
+- [x] Vendor detail page placeholder with 4 tabs; requirement detail page with PM "Create RFP"
+- [x] TanStack Query hooks in `src/lib/queries/rfps.ts` (optimistic kanban moves in the query cache)
+- [x] `logActivity()` on every state change (rfp created/edited/status/archived/deleted, vendor invited/removed/shortlisted, requirement linked). No App Flow §8.3 notification is triggered by Phase 5 events.
+- [x] Fix #59 (security review): avatar/logo paths validated before signing; `avatar_url` no longer client-writable (0031)
 
-Verify:
-- [ ] New RFP appears in the right column
-- [ ] Drag updates status in DB
-- [ ] Split view shows metadata + vendor list
-- [ ] Invite creates `vendor_accounts` + `vendor_invites`; email sends; row shows "Invited"
-- [ ] Breadcrumb Pipeline > [RFP]
-- [ ] Forms block invalid submission
-- [ ] Query cache avoids refetch on back-navigation
-- [ ] Commit
+Verify (2026-10-14 — headless Chromium against the production build):
+- [x] New RFP appears in the right column (RFP Created); evaluation auto-created; activity logged
+- [x] Drag updates status in DB; drops on Approval Pending / Contracted / Archived refused (P5-1); backwards drags allowed
+- [x] Split view shows metadata + vendor list; inline title edit; edit modal; archive with confirmation
+- [x] Invite creates `vendor_accounts` + `vendor_invites` (64-char token, 72 h); email sends (Mailpit); row shows "Invited"; first invite → Vendors Invited; duplicate → inline error; existing vendor reused
+- [x] Breadcrumb Pipeline > [RFP]
+- [x] Forms block invalid submission (required fields, budget max < min)
+- [x] Query cache avoids refetch on back-navigation (1 request total)
+- [x] Extra: dashboard stats + sparklines + snapshot + activity; filters / search; remove (P5-5); shortlist + once-only vendor email (P5-6); requirement → RFP (P5-2); DH / FA / vendor access limits; #59 lockdown — 64/64 + cache check; Phase 4 53/53, Phase 3 73/73, Phase 2 45/45 regression green
+- [x] Commit
 
 ## Phase 6 — Vendor portal
 

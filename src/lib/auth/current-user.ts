@@ -19,11 +19,18 @@ export type ShellUser = {
 const SIGNED_URL_TTL_SECONDS = 60 * 60
 
 // Storage buckets are private (CLAUDE.md): images are shown through short-lived signed URLs.
-async function signedOrgAsset(path: string | null): Promise<string | null> {
-  if (!path) return null
+// The service role signs them, so a stored path is never trusted (#59): it must match the
+// exact shape this org's server routes write.
+async function signedOrgAsset(path: string | null, allowed: RegExp): Promise<string | null> {
+  if (!path || !allowed.test(path)) return null
   const { data } = await createAdminClient().storage.from('org-assets').createSignedUrl(path, SIGNED_URL_TTL_SECONDS)
   return data?.signedUrl ?? null
 }
+
+const exact = (pattern: string) => new RegExp(`^${pattern}$`)
+// org / user ids are UUIDs from the database (hex and dashes), so they are safe inside a RegExp.
+export const logoPathPattern = (orgId: string) => exact(`${orgId}/logo\\.(png|jpg|webp)`)
+export const avatarPathPattern = (orgId: string, userId: string) => exact(`${orgId}/avatars/${userId}\\.(png|jpg|webp)`)
 
 /** The signed-in internal user for the app shell, or null. Cached per request. */
 export const getShellUser = cache(async (): Promise<ShellUser | null> => {
@@ -41,8 +48,8 @@ export const getShellUser = cache(async (): Promise<ShellUser | null> => {
   if (!profile) return null
 
   const [avatarUrl, orgLogoUrl] = await Promise.all([
-    signedOrgAsset(profile.avatar_url),
-    signedOrgAsset(profile.organisations?.logo_url ?? null),
+    signedOrgAsset(profile.avatar_url, avatarPathPattern(profile.org_id, userData.user.id)),
+    signedOrgAsset(profile.organisations?.logo_url ?? null, logoPathPattern(profile.org_id)),
   ])
 
   return {

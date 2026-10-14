@@ -37,10 +37,15 @@ export async function PATCH(request: Request) {
     if (uploadError) return apiError(500, 'upload_failed', 'We could not upload the photo. Please try again.')
   }
 
-  // Runs as the user: column privileges allow only full_name / avatar_url (#39).
+  // Name: as the user (column privileges allow full_name only — #39, #59).
+  // Photo path: server-generated above, written with the service role (#59).
   const after = { full_name: parsed.data.fullName, avatar_url: avatarPath }
-  const { error } = await auth.supabase.from('profiles').update(after).eq('id', auth.userId)
+  const { error } = await auth.supabase.from('profiles').update({ full_name: after.full_name }).eq('id', auth.userId)
   if (error) return apiError(500, 'update_failed', 'We could not save your profile. Please try again.')
+  if (avatarPath !== before.avatar_url) {
+    const { error: photoError } = await createAdminClient().from('profiles').update({ avatar_url: avatarPath }).eq('id', auth.userId)
+    if (photoError) return apiError(500, 'update_failed', 'We could not save your photo. Please try again.')
+  }
 
   await logActivity({
     orgId,
