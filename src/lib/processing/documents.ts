@@ -95,6 +95,7 @@ async function buyerContext(orgId: string, rfpId: string): Promise<string> {
  */
 export async function runCompliance(ctx: Pick<DocContext, 'id' | 'orgId' | 'rfpId' | 'fileName'>, text: string): Promise<number> {
   const result = await generateJson({
+    task: 'compliance',
     system: COMPLIANCE_PROMPT.system,
     prompt: COMPLIANCE_PROMPT.build(text, await buyerContext(ctx.orgId, ctx.rfpId)),
     jsonSchema: COMPLIANCE_PROMPT.jsonSchema,
@@ -148,6 +149,7 @@ export async function processDocument(documentId: string, alreadyClaimed = false
   try {
     const text = await loadDocumentText(ctx.storagePath, ctx.fileType)
     const extraction = await generateJson({
+      task: 'extraction',
       system: EXTRACTION_PROMPT.system,
       prompt: EXTRACTION_PROMPT.build(text, ctx.fileName),
       jsonSchema: EXTRACTION_PROMPT.jsonSchema,

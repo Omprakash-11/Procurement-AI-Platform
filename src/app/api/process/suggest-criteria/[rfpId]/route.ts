@@ -57,6 +57,7 @@ export const POST = withErrors(async function POST(_request: Request, { params }
 
   try {
     const result = await generateJson({
+      task: 'criteria',
       system: CRITERIA_SUGGESTION_PROMPT.system,
       prompt: CRITERIA_SUGGESTION_PROMPT.build(rfp, summaries.join('\n')),
       jsonSchema: CRITERIA_SUGGESTION_PROMPT.jsonSchema,

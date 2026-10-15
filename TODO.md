@@ -66,7 +66,7 @@ Legend: `[ ]` todo · `[x]` done · **⛔ Gate** = decision needed before coding
 | 2026-10-14 | **Defaults (P6)** Vendor status refresh by 30 s polling; vendor-facing labels: internal Approved → Shortlisted, removed → Not Selected; vendor data only via server routes with whitelisted fields (P2-4). |
 | 2026-10-14 | **P7-1 (#2)** `@google/genai` 2.29.1 (replaces `@google/generative-ai`); `gemini-2.5-pro` for extraction / compliance / scoring / report, `gemini-2.5-flash` for criteria suggestion and as fallback; SDK JSON mode + response schema, then Zod. |
 | 2026-10-15 | **P7-1 revised (#2)** Live test: 2.5 Pro/Flash return 404 (retired for new keys), 3.x Flash 503 / Pro previews no quota on the free tier. Option A: enable billing on the AI Studio project (pending — user to confirm); model chain `gemini-3.8-flash` → `gemini-3.1-flash-lite` (`MODEL_CHAIN` in `src/lib/gemini/client.ts`), 3 attempts per model with backoff on 429/5xx, 240 s total budget. Until billing is on, calls fall through to flash-lite. |
-| 2026-10-15 | **P7-1 revised again (Option B)** The app is a portfolio / demo project (no real customers or vendor documents), so it stays on the Gemini free tier with no billing. `MODEL_CHAIN` = `gemini-3.1-flash-lite` → `gemini-3.8-flash` (3.8-flash only answers with billing, so it is the backup). Supersedes the billing part of Option A. Demo idea for Phase 12: a demo org with pre-generated AI results so demos don't depend on the day's quota. |
+| 2026-10-15 | **P7-1 revised again (Option B)** The app runs as a demonstration deployment (no real customers or vendor documents), so it stays on the Gemini free tier with no billing. `MODEL_CHAIN` = `gemini-3.1-flash-lite` → `gemini-3.8-flash` (3.8-flash only answers with billing, so it is the backup). Supersedes the billing part of Option A. Demo idea for Phase 12: a demo org with pre-generated AI results so demos don't depend on the day's quota. |
 | 2026-10-14 | **P7-2 (#4)** `@vercel/functions` 3.10.1 `waitUntil()` runs the pipeline in-process; `/api/process/document/[id]` is the PM Retry route; processing routes `maxDuration` 300 s; client polls every 5 s. |
 | 2026-10-14 | **P7-3 (#36)** SheetJS `xlsx` 0.20.3 from cdn.sheetjs.com (pinned tarball + lockfile integrity) instead of npm 0.18.5. |
 | 2026-10-14 | **P7-4** Documents are processed (extraction → compliance) when the vendor submits, not on upload; internal users see a vendor's documents only after submission (RLS + storage policy change). Compliance route kept for re-runs. |
@@ -86,6 +86,10 @@ Legend: `[ ]` todo · `[x]` done · **⛔ Gate** = decision needed before coding
 | 2026-10-15 | **Defaults (P8/P9)** FA contracts: API read only, no page (#22). No email preferences in v1 (#15). New requirement department pre-filled from the DH's last requirement (profiles have none). Initiate Renewal = prefilled Create RFP modal, then prefilled Invite Vendor modal (PM confirms). Contract file in `contract-documents` at `{org_id}/{contract_id}/…`, signed-URL download, replaceable. Contracts sort: end date (default) / value / vendor; days-remaining colours = SLA colours. Approval-request email deep link to `/approvals/[id]` (works signed out via `redirectTo`). |
 | 2026-10-15 | **P10-1** Global search built in Phase 10 (no phase owned it): `GET /api/search?q=` over rfps / vendor_accounts / contracts via the tsvector columns (never ILIKE), RLS-scoped per role; overlay top 5 per category, `/search` full list; role-aware links. |
 | 2026-10-15 | **P10-2** 500 page "Contact support" → optional `NEXT_PUBLIC_SUPPORT_EMAIL` (added to `.env.example`), falls back to `RESEND_FROM_EMAIL`; hidden when neither is set. |
+| 2026-10-15 | **P11-1** AI in E2E tests: a test-only Gemini stand-in (`GEMINI_MOCK=1`, honoured only with local Supabase and never on Vercel) that answers from the uploaded document's own text (realistic extraction, clause-level compliance flags, evidence-based scores and report) — user asked for natural, enterprise-realistic AI behaviour. Same flow against real Gemini via `LIVE_AI=1 npx playwright test --grep @live-ai`. |
+| 2026-10-15 | **P11-2** Test isolation: global setup runs `supabase db reset` once; every spec creates its own uniquely named data (API or service-role helper); 1 worker. |
+| 2026-10-15 | **P11-3** Beyond the Plan's 7 specs: `isolation.spec.ts` (vendor isolation, CLAUDE.md) and `requirements.spec.ts` (DH flow); extra page objects Dashboard, Requirements, Activity, VendorDetail, Report. |
+| 2026-10-15 | **P11-4** Keep the full 25-test suite; record the measured run time (3.6 min tests + ~1.3 min setup on this machine) instead of trimming coverage to meet the Plan's 3-minute target. |
 | 2026-10-14 | **CLAUDE.md over Tech Stack §8.2** Kanban optimistic updates live in the TanStack Query cache, not Zustand ("never put API data in Zustand"). |
 | 2026-10-14 | **#34** Repo already exists — no `git init`; scaffold in a temp dir and copy in; single commit at the end of the verified phase. |
 
@@ -413,12 +417,22 @@ Verify (2026-10-15 — headless Chromium against the production build):
 
 ## Phase 11 — E2E testing
 
-- [ ] `playwright.config.ts` (chromium, baseURL, 30s timeout)
-- [ ] Page objects in `tests/pages/`; auth fixtures for each role
-- [ ] Specs: auth, rfp, vendor-portal, ai-processing, approvals, contracts, activity
-- [ ] Full suite green; HTML report
+⛔ Gates resolved 2026-10-15: P11-1 (realistic AI stand-in + @live-ai), P11-2 (one reset, own data, 1 worker), P11-3 (isolation + requirements specs), P11-4 (keep full suite; time recorded).
 
-Verify: 0 failures, all 5 critical flows, POM only, independent specs, < 3 min. Commit.
+- [x] `playwright.config.ts`: Chromium, baseURL :3100 (`next start` with `GEMINI_MOCK=1`, or real Gemini with `LIVE_AI=1`), 30 s timeout, 1 worker, list + HTML reporters
+- [x] `tests/global-setup.ts` (build check + one `supabase db reset`); `tests/fixtures/auth.ts` (fresh API sign-in per test for PM / DH / FA / two vendors)
+- [x] Helpers: service-role data (`createReportedRfp`, `enrolVendor`, `createThrowawayUser`…), Mailpit, realistic proposal PDFs / scanned PDF / XLSX
+- [x] Page objects (11): Login, Dashboard, Pipeline, RFPDetail, VendorDetail, Report, VendorPortal, Approval, Contract, Requirements, Activity
+- [x] Specs (9 files, 25 tests): auth, rfp, vendor-portal, ai-processing (+ @live-ai), approvals, contracts, activity, requirements, isolation
+- [x] Test-only Gemini stand-in `src/lib/gemini/test-stand-in.ts` (P11-1), gated to local Supabase and never on Vercel
+
+Verify (2026-10-15):
+- [x] `npx playwright test` — 25 passed, 0 failed; `@live-ai` on real Gemini — passed (56 s)
+- [x] All 5 critical flows covered (auth, RFP lifecycle, vendor portal, approvals, contracts) + AI, activity, requirements, isolation
+- [x] Page-object model only; specs independent (own data, fresh sessions)
+- [x] HTML report generated (`npx playwright show-report`)
+- [x] Run time — P11-4: 3.6 min of tests + ~1.3 min one-time reset / server start (4.9 min) on this Windows machine; target of 3 min not met because of single-server page latency; 2 workers measured no faster and less reliable
+- [x] Commit
 
 ## Phase 12 — Production deployment
 

@@ -48,6 +48,7 @@ async function scoreVendor(ctx: { evaluationId: string; orgId: string; rfp: { id
     const material = await vendorMaterial(ctx.rfp.id, vendorAccountId)
     if (!material) return false
     const result = await generateJson({
+      task: 'scoring',
       system: SCORING_PROMPT.system,
       prompt: SCORING_PROMPT.build(ctx.rfp, criteria, material),
       jsonSchema: SCORING_PROMPT.jsonSchema,

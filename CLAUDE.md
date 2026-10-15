@@ -201,7 +201,7 @@ These were found while reading the docs. **Each one is a decision point** — wh
 - **New: Next.js version** → Next 15.5.27 + React 19.2.8, because every Next 14.2.x release has open critical/high advisories.
 
 **Resolved (2026-10-15, Phase 7)** — see P7-1 … P7-8 in `TODO.md`:
-- **#1, #2** → Gemini confirmed; SDK `@google/genai` 2.29.1; model chain `gemini-3.1-flash-lite` → `gemini-3.8-flash` (`MODEL_CHAIN` in `src/lib/gemini/client.ts`, retries on 429/5xx). Free tier, no billing: this is a portfolio / demo app with no real customer documents (Option B, 2026-10-15).
+- **#1, #2** → Gemini confirmed; SDK `@google/genai` 2.29.1; model chain `gemini-3.1-flash-lite` → `gemini-3.8-flash` (`MODEL_CHAIN` in `src/lib/gemini/client.ts`, retries on 429/5xx). Free tier, no billing: this is a demonstration deployment with no real customer documents (Option B, 2026-10-15).
 - **#4** → `@vercel/functions` 3.10.1 `waitUntil()`; processing routes `maxDuration` 300; PDF via `puppeteer-core` (+ `@sparticuz/chromium` on Vercel, local Edge/Chrome).
 - **#15 (part)** → `vendor_notes` and `report_share_links` tables (migration 0032).
 

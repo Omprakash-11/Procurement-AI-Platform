@@ -34,6 +34,7 @@ export async function generateReport(rfpId: string, actorId: string): Promise<vo
   })
 
   const result = await generateJson({
+    task: 'report',
     system: REPORT_PROMPT.system,
     prompt: REPORT_PROMPT.build({ title: report.rfp.title, description: report.rfp.description }, evaluationJson),
     jsonSchema: REPORT_PROMPT.jsonSchema,

@@ -6,7 +6,7 @@ import type { ZodType } from 'zod'
 
 /**
  * Tried in order: each model gets a few attempts on transient errors before the next one.
- * flash-lite first: it is served on the free tier (this is a demo / portfolio deployment);
+ * flash-lite first: it is served on the free tier (this is a demonstration deployment);
  * 3.8-flash second, which only answers once billing is enabled on the project.
  */
 export const MODEL_CHAIN = ['gemini-3.1-flash-lite', 'gemini-3.8-flash'] as const
@@ -27,12 +27,26 @@ function gemini(): GoogleGenAI {
 
 export class AiError extends Error {}
 
+/**
+ * Decision P11-1: the deterministic stand-in is used only when GEMINI_MOCK=1 AND Supabase is the
+ * local instance AND not on Vercel — so it can never answer for a deployed app.
+ */
+function testStandInEnabled(): boolean {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
+  const local = supabaseUrl.startsWith('http://127.0.0.1') || supabaseUrl.startsWith('http://localhost')
+  return process.env.GEMINI_MOCK === '1' && local && !process.env.VERCEL
+}
+
 /** Overloaded / rate-limited / network: worth retrying the same model. */
 class TransientError extends AiError {}
 /** Model missing or not allowed on this key (404 / 403 / quota 0): move to the next model. */
 class UnavailableError extends AiError {}
 
+export type AiTask = 'extraction' | 'compliance' | 'criteria' | 'scoring' | 'report'
+
 type JsonRequest<T> = {
+  /** Which prompt this is — used by the E2E-test stand-in (P11-1) and in logs. */
+  task: AiTask
   system: string
   prompt: string
   /** JSON Schema the model must follow (Gemini structured output). */
@@ -43,6 +57,14 @@ type JsonRequest<T> = {
 
 /** One JSON-only Gemini call: structured output → JSON.parse → Zod. Throws AiError on failure. */
 export async function generateJson<T>(req: JsonRequest<T>): Promise<T> {
+  if (testStandInEnabled()) {
+    // Decision P11-1: E2E tests only. Answers from the request's own document text, then goes
+    // through the same Zod validation as a real response.
+    const { mockAnswer } = await import('@/lib/gemini/test-stand-in')
+    const parsed = req.schema.safeParse(await mockAnswer(req.task, req.prompt))
+    if (!parsed.success) throw new AiError('The AI response did not match the expected format.')
+    return parsed.data
+  }
   let lastError: unknown = null
   const deadline = Date.now() + BUDGET_MS
   for (const model of MODEL_CHAIN) {
