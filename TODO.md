@@ -345,7 +345,7 @@ Verify:
 - [ ] Approve creates contract + vendor `contracted`
 - [ ] Reject emails PM; recall sets `recalled`
 - [ ] Second pending approval per RFP blocked
-- [x] Commit
+- [ ] Commit
 
 ## Phase 9 — Contracts, notifications & activity
 
@@ -366,7 +366,7 @@ Verify:
 - [ ] Bell shows real counts; clicks navigate correctly
 - [ ] Activity log shows events with before/after
 - [ ] All email templates render
-- [x] Commit
+- [ ] Commit
 
 ## Phase 10 — Error handling & polish
 
