@@ -8,7 +8,7 @@ import { Area, AreaChart, ResponsiveContainer } from 'recharts'
 
 import { cn } from '@/lib/utils'
 
-type StatCardProps = { label: string; value: number; icon: LucideIcon; spark: number[]; href?: string; testId: string }
+type StatCardProps = { label: string; value: number | string; icon: LucideIcon; spark: number[]; href?: string; testId: string }
 
 // Content Guidelines §6.4 stat card: label, Cal Sans value, 20px icon in a 40px primary-tint
 // circle (top-right), sparkline at the bottom (§9.2).

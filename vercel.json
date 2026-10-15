@@ -1,0 +1,6 @@
+{
+  "crons": [
+    { "path": "/api/cron/renewal-alerts", "schedule": "0 8 * * *" },
+    { "path": "/api/cron/approval-sla", "schedule": "0 9 * * *" }
+  ]
+}

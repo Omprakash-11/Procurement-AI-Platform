@@ -15,11 +15,18 @@ import { ApiError } from '@/lib/fetch-json'
 import { useInviteVendor } from '@/lib/queries/rfps'
 import { vendorInviteSchema, type VendorInviteFormValues } from '@/lib/schemas/vendor-invite'
 
-type InviteVendorDialogProps = { rfpId: string; open: boolean; onOpenChange: (open: boolean) => void; onInvited: () => void }
+type InviteVendorDialogProps = {
+  rfpId: string
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onInvited: () => void
+  /** Initiate Renewal (P9 defaults): the incumbent vendor, pre-filled; the PM still confirms. */
+  defaults?: { email: string; companyName: string }
+}
 
 // App Flow §4 Invite Vendor modal: email, company name, personal message. Duplicate → inline
 // error on the email field; success → toast "Invite sent to [email]".
-export function InviteVendorDialog({ rfpId, open, onOpenChange, onInvited }: InviteVendorDialogProps) {
+export function InviteVendorDialog({ rfpId, open, onOpenChange, onInvited, defaults }: InviteVendorDialogProps) {
   const invite = useInviteVendor(rfpId)
   const form = useForm<VendorInviteFormValues>({
     resolver: zodResolver(vendorInviteSchema),
@@ -28,8 +35,8 @@ export function InviteVendorDialog({ rfpId, open, onOpenChange, onInvited }: Inv
   const { errors, isSubmitting } = form.formState
 
   useEffect(() => {
-    if (open) form.reset({ email: '', companyName: '', personalMessage: '' })
-  }, [open, form])
+    if (open) form.reset({ email: defaults?.email ?? '', companyName: defaults?.companyName ?? '', personalMessage: '' })
+  }, [open, form, defaults])
 
   const submit = form.handleSubmit(async (values) => {
     try {

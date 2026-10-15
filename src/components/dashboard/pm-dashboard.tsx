@@ -91,7 +91,7 @@ export function PmDashboard({ data }: { data: PmDashboardData }) {
             <CardTitle>Renewal alerts</CardTitle>
           </CardHeader>
           <CardContent>
-            <DataTable columns={renewalColumns} data={data.renewals} label="Contracts expiring within 90 days" />
+            <DataTable columns={renewalColumns} data={data.renewals} label="Contracts inside their renewal alert window" />
           </CardContent>
         </Card>
         <Card>

@@ -203,7 +203,15 @@ These were found while reading the docs. **Each one is a decision point** — wh
 **Resolved (2026-10-15, Phase 7)** — see P7-1 … P7-8 in `TODO.md`:
 - **#1, #2** → Gemini confirmed; SDK `@google/genai` 2.29.1; model chain `gemini-3.1-flash-lite` → `gemini-3.8-flash` (`MODEL_CHAIN` in `src/lib/gemini/client.ts`, retries on 429/5xx). Free tier, no billing: this is a portfolio / demo app with no real customer documents (Option B, 2026-10-15).
 - **#4** → `@vercel/functions` 3.10.1 `waitUntil()`; processing routes `maxDuration` 300; PDF via `puppeteer-core` (+ `@sparticuz/chromium` on Vercel, local Edge/Chrome).
-- **#15 (part)** → `vendor_notes` and `report_share_links` tables (migration 0032). DH comments, requirement attachments and escalated-flag ↔ approval linkage remain open for Phase 8.
+- **#15 (part)** → `vendor_notes` and `report_share_links` tables (migration 0032).
+
+**Resolved (2026-10-15, Phases 8–9)** — see P8-1 … P9-2 in `TODO.md`:
+- **#15** → `report_comments` (DH recommendations) and `requirement_attachments` (files in private `org-assets`), migration 0033; escalated flags on an approval are derived, no link table; no email preferences in v1.
+- **#28** → approval goes straight to Contracted (App Flow §6); the RFP / requirement / other-vendor statuses follow P8-6.
+- **#22** → FA reads contracts through the API only; no FA Contracts page.
+- **#40** → activity_log readable org-wide by the PM only; DH / FA see activity for what they can access (migration 0034).
+- **Approvals** → PM picks vendor + FA; SLA = 3 business days (UTC, weekends skipped).
+- **Cron** → routes accept GET (Vercel Cron) and POST with `Authorization: Bearer <CRON_SECRET>`; `process_contract_renewals()` returns the contracts it flagged (0034).
 
 **AI and dependencies**
 1. PRD §6 says Anthropic Claude API; Tech Stack, Schema, and Plan say Gemini. Treat Gemini as current, but confirm.

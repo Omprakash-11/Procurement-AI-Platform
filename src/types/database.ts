@@ -743,6 +743,56 @@ export type Database = {
           },
         ]
       }
+      report_comments: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          org_id: string
+          rfp_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          org_id: string
+          rfp_id: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          org_id?: string
+          rfp_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'report_comments_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'report_comments_org_id_fkey'
+            columns: ['org_id']
+            isOneToOne: false
+            referencedRelation: 'organisations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'report_comments_rfp_id_fkey'
+            columns: ['rfp_id']
+            isOneToOne: false
+            referencedRelation: 'rfps'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       report_share_links: {
         Row: {
           created_at: string
@@ -795,6 +845,65 @@ export type Database = {
             columns: ['rfp_id']
             isOneToOne: false
             referencedRelation: 'rfps'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      requirement_attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_size_bytes: number
+          file_type: Database['public']['Enums']['document_type']
+          id: string
+          org_id: string
+          requirement_id: string
+          storage_path: string
+          uploaded_by: string
+        }
+        ComputedFields: never
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_size_bytes: number
+          file_type: Database['public']['Enums']['document_type']
+          id?: string
+          org_id: string
+          requirement_id: string
+          storage_path: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_size_bytes?: number
+          file_type?: Database['public']['Enums']['document_type']
+          id?: string
+          org_id?: string
+          requirement_id?: string
+          storage_path?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'requirement_attachments_org_id_fkey'
+            columns: ['org_id']
+            isOneToOne: false
+            referencedRelation: 'organisations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'requirement_attachments_requirement_id_fkey'
+            columns: ['requirement_id']
+            isOneToOne: false
+            referencedRelation: 'requirements'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'requirement_attachments_uploaded_by_fkey'
+            columns: ['uploaded_by']
+            isOneToOne: false
+            referencedRelation: 'profiles'
             referencedColumns: ['id']
           },
         ]
@@ -1424,7 +1533,14 @@ export type Database = {
       }
       process_contract_renewals: {
         Args: Record<PropertyKey, never>
-        Returns: undefined
+        Returns: {
+          contract_id: string
+          days_remaining: number
+          end_date: string
+          org_id: string
+          pm_id: string
+          title: string
+        }[]
       }
       reserve_invite_email: {
         Args: { p_actor_id: string; p_limit: number; p_org_id: string }

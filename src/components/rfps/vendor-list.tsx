@@ -16,14 +16,21 @@ import { useVendorAction } from '@/lib/queries/rfps'
 import type { RfpVendorRow } from '@/lib/rfps'
 import { SHORTLISTABLE, VENDOR_STATUS_LABEL, VENDOR_STATUS_TONE } from '@/lib/status'
 
-type VendorListProps = { rfpId: string; vendors: RfpVendorRow[]; canInvite: boolean; readOnly: boolean }
+type VendorListProps = {
+  rfpId: string
+  vendors: RfpVendorRow[]
+  canInvite: boolean
+  readOnly: boolean
+  /** Opens the invite modal pre-filled on load (Initiate Renewal). */
+  initialInvite?: { email: string; companyName: string } | undefined
+}
 
 // App Flow §4 RFP Detail — right panel. Columns: Vendor Name, Status, Documents, Compliance
 // Flags, Score (if scored), Actions (View Details | Shortlist toggle | Remove).
-export function VendorList({ rfpId, vendors, canInvite, readOnly }: VendorListProps) {
+export function VendorList({ rfpId, vendors, canInvite, readOnly, initialInvite }: VendorListProps) {
   const router = useRouter()
   const action = useVendorAction(rfpId)
-  const [inviteOpen, setInviteOpen] = useState(false)
+  const [inviteOpen, setInviteOpen] = useState(Boolean(initialInvite && canInvite && !readOnly))
   const [removing, setRemoving] = useState<RfpVendorRow | null>(null)
 
   const run = async (row: RfpVendorRow, kind: 'shortlist' | 'unshortlist' | 'remove') => {
@@ -118,7 +125,7 @@ export function VendorList({ rfpId, vendors, canInvite, readOnly }: VendorListPr
       </div>
       <DataTable columns={columns} data={vendors} label="Vendors invited to this RFP" />
 
-      <InviteVendorDialog rfpId={rfpId} open={inviteOpen} onOpenChange={setInviteOpen} onInvited={() => router.refresh()} />
+      <InviteVendorDialog rfpId={rfpId} open={inviteOpen} onOpenChange={setInviteOpen} onInvited={() => router.refresh()} {...(initialInvite ? { defaults: initialInvite } : {})} />
       <ConfirmDialog
         open={removing !== null}
         onOpenChange={(open) => !open && setRemoving(null)}

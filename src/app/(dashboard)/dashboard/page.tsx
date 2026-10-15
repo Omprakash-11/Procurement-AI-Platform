@@ -2,7 +2,9 @@ import type { Metadata } from 'next'
 
 import { DeniedToast } from '@/components/auth/denied-toast'
 import { PmDashboard } from '@/components/dashboard/pm-dashboard'
+import { DhDashboard, FaDashboard } from '@/components/dashboard/role-dashboards'
 import { loadPmDashboard } from '@/lib/dashboard'
+import { loadDhDashboard, loadFaDashboard } from '@/lib/role-dashboards'
 import { createClient } from '@/lib/supabase/server'
 import { PageContainer, PageHeader } from '@/components/layout/page-header'
 import { getShellUser } from '@/lib/auth/current-user'
@@ -11,8 +13,7 @@ import type { UserRole } from '@/types'
 
 export const metadata: Metadata = { title: 'Dashboard — ProcureMaster' }
 
-// Plan Phase 4: one /dashboard that renders per role. The role dashboards themselves are
-// built in Phase 5 (PM) and Phase 8 (DH, FA).
+// Plan Phase 4: one /dashboard that renders per role — PM (Phase 5), DH and FA (Phase 8).
 const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   procurement_manager: 'Your procurement pipeline at a glance.',
   department_head: 'Track your requirements and review vendor evaluations.',
@@ -24,7 +25,10 @@ type DashboardPageProps = { searchParams: Promise<{ denied?: string }> }
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const user = await getShellUser()
   const { denied } = await searchParams
-  const pmData = user?.role === 'procurement_manager' ? await loadPmDashboard(await createClient()) : null
+  const supabase = await createClient()
+  const pmData = user?.role === 'procurement_manager' ? await loadPmDashboard(supabase) : null
+  const dhData = user?.role === 'department_head' ? await loadDhDashboard(supabase, user.id) : null
+  const faData = user?.role === 'finance_approver' ? await loadFaDashboard(supabase) : null
 
   return (
     <PageContainer>
@@ -36,6 +40,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         </p>
       )}
       {pmData && <PmDashboard data={pmData} />}
+      {dhData && <DhDashboard data={dhData} />}
+      {faData && <FaDashboard data={faData} />}
     </PageContainer>
   )
 }

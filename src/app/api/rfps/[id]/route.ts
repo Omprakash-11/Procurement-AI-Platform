@@ -83,6 +83,29 @@ export async function PATCH(request: Request, { params }: Params) {
     metadata: { rfp_id: id },
   })
 
+  // Decision P8-6: archiving the RFP closes the requirement it answers.
+  if (after.status === 'archived' && statusChanged) {
+    const { data: closed } = await auth.supabase
+      .from('requirements')
+      .update({ status: 'closed' })
+      .eq('linked_rfp_id', id)
+      .neq('status', 'closed')
+      .select('id, title, status')
+    for (const req of closed ?? []) {
+      await logActivity({
+        orgId,
+        actorId: auth.userId,
+        actorType: 'profile',
+        entityType: 'requirement',
+        entityId: req.id,
+        action: 'requirement.status_changed',
+        description: `Requirement "${req.title}" closed (RFP archived)`,
+        after: { status: 'closed' },
+        metadata: { rfp_id: id },
+      })
+    }
+  }
+
   return NextResponse.json({ rfp: after })
 }
 

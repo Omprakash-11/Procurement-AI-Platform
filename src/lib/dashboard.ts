@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { addDays, differenceInCalendarDays, format, startOfDay, subDays } from 'date-fns'
+import { differenceInCalendarDays, startOfDay, subDays } from 'date-fns'
 
 import { ACTIVE_RFP_STATUSES, type RfpStatus } from '@/lib/status'
 import type { Database } from '@/types'
@@ -52,10 +52,9 @@ export async function loadPmDashboard(supabase: SupabaseClient<Database>): Promi
         .limit(5),
       supabase
         .from('contracts')
-        .select('id, title, end_date, vendor_accounts(company_name)')
+        .select('id, title, end_date, alert_days, vendor_accounts(company_name)')
         .eq('is_deleted', false)
         .in('status', ['active', 'expiring_soon'])
-        .lte('end_date', format(addDays(today, 90), 'yyyy-MM-dd'))
         .order('end_date', { ascending: true }),
       supabase
         .from('activity_log')
@@ -110,13 +109,17 @@ export async function loadPmDashboard(supabase: SupabaseClient<Database>): Promi
       vendorCount: r.rfp_vendor_entries[0]?.count ?? 0,
       daysSinceActivity: differenceInCalendarDays(today, new Date(lastActivity.get(r.id) ?? r.updated_at)),
     })),
-    renewals: (renewalRows.data ?? []).map((c) => ({
-      id: c.id,
-      title: c.title,
-      vendor: c.vendor_accounts?.company_name ?? '',
-      endDate: c.end_date,
-      daysRemaining: differenceInCalendarDays(new Date(`${c.end_date}T12:00:00`), today),
-    })),
+    // Plan Phase 9: contracts inside their own renewal alert window (alert_days).
+    renewals: (renewalRows.data ?? [])
+      .map((c) => ({
+        id: c.id,
+        title: c.title,
+        vendor: c.vendor_accounts?.company_name ?? '',
+        endDate: c.end_date,
+        daysRemaining: differenceInCalendarDays(new Date(`${c.end_date}T12:00:00`), today),
+        alertDays: c.alert_days,
+      }))
+      .filter((c) => c.daysRemaining <= c.alertDays),
     activity: (activityRows.data ?? []).map((a) => ({
       id: a.id,
       actorName: a.actor_id ? (names.get(a.actor_id) ?? 'System') : 'System',

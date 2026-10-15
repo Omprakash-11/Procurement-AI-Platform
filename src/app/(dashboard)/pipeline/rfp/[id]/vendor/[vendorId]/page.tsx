@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
+import { ActivityFeed } from '@/components/activity/activity-feed'
 import { Breadcrumb } from '@/components/layout/breadcrumb'
 import { PageContainer, PageHeader } from '@/components/layout/page-header'
 import { StatusBadge } from '@/components/ui/status-badge'
@@ -77,6 +78,13 @@ export default async function VendorDetailPage({ params }: VendorPageProps) {
             <NotesTab rfpId={id} entryId={entry.id} initialNotes={notes} locked={entry.rfps.status === 'archived'} />
           </TabsContent>
         </Tabs>
+        {/* App Flow §8.2: per-vendor activity, below the four tabs. */}
+        <section aria-labelledby="vendor-activity" className="mt-12 max-w-3xl space-y-3">
+          <h2 id="vendor-activity" className="text-xl font-semibold text-foreground">
+            Activity
+          </h2>
+          <ActivityFeed scope={{ rfpId: id, vendorAccountId: vendorId }} label="Vendor activity" />
+        </section>
       </PageContainer>
     </>
   )

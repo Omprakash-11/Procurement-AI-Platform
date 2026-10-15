@@ -75,6 +75,15 @@ Legend: `[ ]` todo · `[x]` done · **⛔ Gate** = decision needed before coding
 | 2026-10-14 | **P7-7 (#29)** Flagged clauses shown as highlighted excerpts in the Compliance tab — no document viewer. |
 | 2026-10-14 | **P7-8** PDF export: `puppeteer-core` everywhere — `@sparticuz/chromium` on Vercel, the installed Microsoft Edge locally. |
 | 2026-10-14 | **Defaults (P7)** Start Evaluation → submitted vendors Under Review + RFP Under Evaluation; scoring async + "Scoring complete" notification; weighted total = Σ(score × weight%) on 0–10; Generate Report notifies the requirement's DH (in-app + new `evaluation-ready.tsx` email); failures inline with Retry; scanned-PDF message per Tech Stack §6; scoring templates page built here (P4-8). |
+| 2026-10-15 | **P8-1** Submit for Approval: confirmation modal picks the vendor (shortlisted only; AI-recommended pre-selected when shortlisted) and the Finance Approver (pre-selected when there is one). Only that FA can decide (0027 RLS); other FAs read only. |
+| 2026-10-15 | **P8-2** `sla_due_at` = submitted + 3 business days: Saturdays / Sundays skipped, UTC, no holiday calendar. |
+| 2026-10-15 | **P8-3 (#15)** New `report_comments` table: DH of the requirement adds (append-only); PM, FA and that DH read. Shown on the report and approval pages. Migration 0033. |
+| 2026-10-15 | **P8-4 (#15)** New `requirement_attachments` table; files in private `org-assets` at `{org_id}/requirements/{requirement_id}/…` (PDF/DOCX/XLSX ≤ 20MB), direct-to-storage upload like P6-1; raising DH + PM download via signed URLs. Migration 0033. |
+| 2026-10-15 | **P8-5 (#15)** Escalated flags on an approval are derived: every escalated flag on the selected vendor's documents. No link table. |
+| 2026-10-15 | **P8-6 (#28)** Submit → RFP Approval Pending. Approve → RFP Contracted, requirement Vendor Selected, other vendors Not Selected (P5-6 outcome emails), chosen vendor Contracted email. Reject / recall → RFP Shortlisted. Requirement Closed when its RFP is archived. PRD's separate "Approved" stage is skipped. |
+| 2026-10-15 | **P9-1** Cron routes accept GET (Vercel Cron) and POST, both requiring `Authorization: Bearer <CRON_SECRET>`. Migration 0034: `process_contract_renewals()` returns the contracts it flagged; route emails the PM per contract (once — only active → expiring_soon flags). SLA reminder once per approval (email + in-app), dedup via activity log. |
+| 2026-10-15 | **P9-2 (#40)** `activity_log` read: PM all; DH / FA only entries about RFPs they can read (`can_read_rfp`), their own actions, their own requirements / assigned approvals. Migration 0034. |
+| 2026-10-15 | **Defaults (P8/P9)** FA contracts: API read only, no page (#22). No email preferences in v1 (#15). New requirement department pre-filled from the DH's last requirement (profiles have none). Initiate Renewal = prefilled Create RFP modal, then prefilled Invite Vendor modal (PM confirms). Contract file in `contract-documents` at `{org_id}/{contract_id}/…`, signed-URL download, replaceable. Contracts sort: end date (default) / value / vendor; days-remaining colours = SLA colours. Approval-request email deep link to `/approvals/[id]` (works signed out via `redirectTo`). |
 | 2026-10-14 | **CLAUDE.md over Tech Stack §8.2** Kanban optimistic updates live in the TanStack Query cache, not Zustand ("never put API data in Zustand"). |
 | 2026-10-14 | **#34** Repo already exists — no `git init`; scaffold in a temp dir and copy in; single commit at the end of the verified phase. |
 
@@ -331,43 +340,47 @@ Verify:
 
 ## Phase 8 — Dept Head, Finance & approvals
 
-⛔ Gates: #15 (DH recommendation comments, requirement attachments, escalated-flag ↔ approval link), #26, #28, #12, which FA receives a request when an org has several, business-day SLA calculation.
+⛔ Gates resolved 2026-10-15: P8-1 … P8-6 (#15, #28); #26 / #12 already handled in Phase 2.
 
-- [ ] Zod schemas `requirement.ts`, `approval.ts`
-- [ ] `/api/requirements` (+ `[id]`), `/api/approvals` (+ `[id]`, `decide`, `recall`)
-- [ ] DH dashboard, requirements list, new requirement (draft/submit), requirement detail (+ comment)
-- [ ] FA dashboard (SLA colours), approval queue, approval detail (embedded report, escalations, approve/reject modals)
-- [ ] Emails `approval-request.tsx`, `approval-decision.tsx`
+- [x] Zod schemas `requirement.ts`, `approval.ts`; migration 0033 (`report_comments`, `requirement_attachments` — P8-3, P8-4)
+- [x] `/api/requirements` (+ `[id]` GET / PATCH, `attachments` sign / confirm, `attachments/[id]` download / delete), `/api/reports/[rfpId]/comments`
+- [x] `/api/approvals` (GET, POST with business-day SLA), `[id]` (with report + comments), `decide`, `recall`; post-decision workflow (P8-6) in `src/lib/approval-workflow.ts`
+- [x] DH dashboard, requirements list, new / edit requirement (draft / submit, attachments ≤ 20MB), requirement detail (attachments, recommendation comments, Edit while Draft / Submitted)
+- [x] FA dashboard (four cards incl. average decision time; SLA colours), approval queue (Pending / All), approval detail (SLA countdown, escalations, embedded report, DH recommendations, approve / reject modals; decided view)
+- [x] Submit for Approval (report page + RFP panel): vendor + FA pickers, pending state with Recall
+- [x] Emails `approval-request.tsx`, `approval-decision.tsx`; requirement-submitted in-app notification; archiving an RFP closes its requirement
 
-Verify:
-- [ ] DH requirement reaches PM pipeline; DH sees only own
-- [ ] FA SLA colours correct; email deep link works logged-in and logged-out
-- [ ] Approval shows full report
-- [ ] Approve creates contract + vendor `contracted`
-- [ ] Reject emails PM; recall sets `recalled`
-- [ ] Second pending approval per RFP blocked
-- [ ] Commit
+Verify (2026-10-15 — headless Chromium against the production build, emails from Mailpit):
+- [x] DH requirement reaches the PM pipeline (+ in-app notification); DH sees only own; attachments private (DH + PM only, no direct Storage)
+- [x] FA SLA colours green / amber / red; email deep link works signed in and signed out
+- [x] Approval shows the full report, escalated flags at the top, DH recommendations
+- [x] Approve creates the contract; vendor Contracted, other vendor Not Selected, RFP Contracted, requirement Vendor Selected; vendor + PM emails
+- [x] Reject (comment + reason required) → PM in-app + email with reason; RFP back to Shortlisted
+- [x] PM recall → `recalled`; recalled request can't be decided
+- [x] Second submission blocked (API 409 and the `one_pending_approval_per_rfp` index)
+- [x] Fixed during verification: picked attachments were dropped (live FileList emptied before the state update); reject modal showed the reason error only after the comment was valid
+- [x] Commit
 
 ## Phase 9 — Contracts, notifications & activity
 
-⛔ Gates: #22 (FA contract access), #15 (email notification preferences), #30, renewal-alert email recipients and dedup.
+⛔ Gates resolved 2026-10-15: P9-1, P9-2 (#40), defaults (#22, #15 email prefs); #30 = App Flow §8.3 is the notification source.
 
-- [ ] `/api/contracts` (+ `[id]`, `terminate`); contracts list + detail (alert days inline edit, document, activity, terminate, initiate renewal)
-- [ ] Wire renewal panel on PM dashboard
-- [ ] Cron routes `renewal-alerts`, `approval-sla` (CRON_SECRET) + `vercel.json`
-- [ ] Emails: SLA reminder, vendor status update, renewal alert, team invite, password reset
-- [ ] Notifications API (GET, read-all), bell polling 30s, deep links
-- [ ] Activity API (global, per-RFP), `/activity` infinite scroll + filters, per-RFP tab, per-vendor section
-- [ ] Notifications for every App Flow §8.3 event
+- [x] `/api/contracts` (+ `[id]` GET / PATCH / DELETE soft, `terminate`, `document` upload / download, `activity`); contracts list (status tabs, sort) + detail (edit, inline alert days, document, activity, terminate, initiate renewal)
+- [x] PM dashboard renewal panel uses each contract's `alert_days`
+- [x] Cron routes `renewal-alerts`, `approval-sla` (GET + POST, Bearer CRON_SECRET) + `vercel.json`; migration 0034 (`process_contract_renewals()` returns flagged contracts; activity visibility P9-2)
+- [x] Emails: `approval-sla-reminder.tsx`, `renewal-alert.tsx` (vendor status, team invite, password reset already exist)
+- [x] Notifications API + bell (Phase 4) — all App Flow §8.3 events now raised
+- [x] `/api/activity` (cursor pages of 50, type / date filters), `/api/activity/rfp/[id]`; `/activity` infinite scroll + filters + before / after details; per-RFP Activity tab; per-vendor section under the vendor tabs; contract activity
 
-Verify:
-- [ ] Contract auto-created on approval; alert days editable; terminate records reason
-- [ ] Cron routes 401 without secret; renewal cron updates status + notifies
-- [ ] Dashboard renewal panel shows real data
-- [ ] Bell shows real counts; clicks navigate correctly
-- [ ] Activity log shows events with before/after
-- [ ] All email templates render
-- [ ] Commit
+Verify (2026-10-15):
+- [x] Contract auto-created on approval; details + alert days editable; terminate records reason (and locks edits)
+- [x] Cron routes 401 without / with a wrong secret; renewal cron flags once, notifies + emails; SLA cron reminds once
+- [x] Dashboard renewal panel shows real data
+- [x] Bell shows real counts; clicking opens the right entity
+- [x] Activity log shows events with before / after; type and date filters; DH / FA scoped (P9-2)
+- [x] All email templates render (Mailpit)
+- [x] Extra: Initiate Renewal (prefilled RFP → prefilled invite, nothing sent until confirmed); FA contracts API but no page; vendor isolation on every new table / route — Phase 8 + 9 suite 115/115
+- [x] Commit
 
 ## Phase 10 — Error handling & polish
 

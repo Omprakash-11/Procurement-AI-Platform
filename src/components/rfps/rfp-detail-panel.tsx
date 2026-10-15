@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
+import { SubmitForApproval, type ApprovalOption, type PendingApproval } from '@/components/approvals/submit-for-approval'
 import { CriteriaDialog } from '@/components/evaluation/criteria-dialog'
 import { ConfirmDialog } from '@/components/rfps/confirm-dialog'
 import { InviteVendorDialog } from '@/components/rfps/invite-vendor-dialog'
@@ -20,7 +21,12 @@ import { formatBudget, type RfpDetail } from '@/lib/rfps'
 import { isoToDateInput } from '@/lib/schemas/rfp'
 import { RFP_STATUS_LABEL, RFP_STATUS_TONE } from '@/lib/status'
 
-type RfpDetailPanelProps = { detail: RfpDetail; departments: string[] }
+type RfpDetailPanelProps = {
+  detail: RfpDetail
+  departments: string[]
+  /** Phase 8: Submit for Approval / pending state, once the report exists. */
+  approval: { shortlisted: ApprovalOption[]; approvers: ApprovalOption[]; pending: PendingApproval | null } | null
+}
 
 const DESCRIPTION_PREVIEW = 280
 const INVITABLE = ['requirements_received', 'rfp_created', 'vendors_invited', 'submissions_in', 'under_evaluation']
@@ -29,8 +35,9 @@ const POLL_MS = 5_000
 
 // App Flow §4 RFP Detail — left panel: inline-editable title, status, department, budget,
 // deadline, collapsible description, actions. Start Evaluation (>= 1 submission) opens the
-// criteria modal; Generate Report appears once scoring is complete. Submit for Approval: Phase 8.
-export function RfpDetailPanel({ detail, departments }: RfpDetailPanelProps) {
+// criteria modal; Generate Report appears once scoring is complete; Submit for Approval once the
+// report exists and a vendor is shortlisted (P8-1).
+export function RfpDetailPanel({ detail, departments, approval }: RfpDetailPanelProps) {
   const router = useRouter()
   const { rfp, currency } = detail
   const [editingTitle, setEditingTitle] = useState(false)
@@ -128,6 +135,17 @@ export function RfpDetailPanel({ detail, departments }: RfpDetailPanelProps) {
         )}
       </div>
 
+      {approval && (
+        <SubmitForApproval
+          rfpId={rfp.id}
+          shortlisted={approval.shortlisted}
+          approvers={approval.approvers}
+          recommendedVendorId={null}
+          pending={approval.pending}
+          eligible={!evaluationLocked}
+          fullWidth
+        />
+      )}
       {detail.evaluation?.reportGeneratedAt && (
         <Button variant="outline" className="w-full" asChild>
           <Link href={`/pipeline/rfp/${rfp.id}/report`}>

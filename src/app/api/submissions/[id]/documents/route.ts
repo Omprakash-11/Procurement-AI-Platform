@@ -7,7 +7,7 @@ import { apiError, validationError } from '@/lib/api'
 import { MAX_UPLOAD_BYTES, uploadRequestSchema } from '@/lib/schemas/vendor-portal'
 import { createAdminClient } from '@/lib/supabase/server'
 import { requireVendor } from '@/lib/vendor/portal'
-import { removeObject, safeFileName, typeFor, vendorDocumentDir, verifyUploadedObject, VENDOR_BUCKET } from '@/lib/vendor/storage'
+import { mimeForExtension, removeObject, safeFileName, typeFor, vendorDocumentDir, verifyUploadedObject, VENDOR_BUCKET } from '@/lib/vendor/storage'
 import { loadOwnedSubmission } from '@/lib/vendor/submissions'
 
 type Params = { params: Promise<{ id: string }> }
@@ -99,12 +99,4 @@ export async function POST(request: Request, { params }: Params) {
     { document: { id: doc.id, fileName: doc.file_name, fileType: doc.file_type, sizeBytes: doc.file_size_bytes, uploadedAt: doc.created_at } },
     { status: 201 }
   )
-}
-
-function mimeForExtension(fileName: string): string {
-  const lower = fileName.toLowerCase()
-  if (lower.endsWith('.pdf')) return 'application/pdf'
-  if (lower.endsWith('.docx')) return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-  if (lower.endsWith('.xlsx')) return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-  return ''
 }

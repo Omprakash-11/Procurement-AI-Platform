@@ -22,6 +22,8 @@ const ROLE_RULES: { test: (path: string) => boolean; roles: UserRole[] }[] = [
   // The comparison report is the only pipeline page a DH may open (read-only).
   { test: (p) => /^\/pipeline\/rfp\/[^/]+\/report\/?$/.test(p), roles: ['procurement_manager', 'department_head'] },
   { test: (p) => matches(p, '/pipeline'), roles: ['procurement_manager'] },
+  // App Flow §1: only a DH raises or edits requirements; the PM reads them.
+  { test: (p) => p === '/requirements/new' || /^\/requirements\/[^/]+\/edit\/?$/.test(p), roles: ['department_head'] },
   { test: (p) => matches(p, '/requirements'), roles: ['procurement_manager', 'department_head'] },
   { test: (p) => matches(p, '/approvals'), roles: ['finance_approver'] },
   { test: (p) => matches(p, '/contracts'), roles: ['procurement_manager'] },

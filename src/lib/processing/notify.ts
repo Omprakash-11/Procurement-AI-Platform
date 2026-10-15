@@ -22,7 +22,7 @@ type NotifyInput = {
   type: Enums<'notification_type'>
   title: string
   body: string
-  entityType: 'rfp' | 'report'
+  entityType: 'rfp' | 'report' | 'requirement' | 'approval_request' | 'contract'
   entityId: string
 }
 
@@ -37,4 +37,19 @@ export async function notify(input: NotifyInput): Promise<void> {
     entity_id: input.entityId,
   })
   if (error) console.error('notify failed', input.type, error.message)
+}
+
+/** App Flow §5: "On submit … PM receives in-platform notification". */
+export async function notifyPmOfRequirement(orgId: string, requirementId: string, title: string): Promise<void> {
+  const pm = await findPm(orgId)
+  if (!pm) return
+  await notify({
+    orgId,
+    recipientId: pm.id,
+    type: 'requirement_submitted',
+    title: 'New requirement submitted',
+    body: title,
+    entityType: 'requirement',
+    entityId: requirementId,
+  })
 }
