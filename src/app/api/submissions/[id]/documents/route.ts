@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
-import { apiError, validationError } from '@/lib/api'
+import { apiError, validationError, withErrors } from '@/lib/api'
 import { MAX_UPLOAD_BYTES, uploadRequestSchema } from '@/lib/schemas/vendor-portal'
 import { createAdminClient } from '@/lib/supabase/server'
 import { requireVendor } from '@/lib/vendor/portal'
@@ -21,7 +21,7 @@ const SIZE_ERROR = 'File exceeds the 50MB limit. Please compress or split the fi
 //   { action: 'confirm' } → verify the stored object (exists, ≤ 50MB, file signature), then
 //                           create the document row (status 'queued'). AI processing of
 //                           queued documents is wired in Phase 7.
-export async function POST(request: Request, { params }: Params) {
+export const POST = withErrors(async function POST(request: Request, { params }: Params) {
   const auth = await requireVendor()
   if (!auth.ok) return auth.response
   const { id } = await params
@@ -99,4 +99,4 @@ export async function POST(request: Request, { params }: Params) {
     { document: { id: doc.id, fileName: doc.file_name, fileType: doc.file_type, sizeBytes: doc.file_size_bytes, uploadedAt: doc.created_at } },
     { status: 201 }
   )
-}
+})

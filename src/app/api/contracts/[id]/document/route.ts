@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
-import { apiError, requireUser, validationError } from '@/lib/api'
+import { apiError, requireUser, validationError, withErrors } from '@/lib/api'
 import { attachmentUploadSchema } from '@/lib/schemas/requirement'
 import { MAX_UPLOAD_BYTES } from '@/lib/schemas/vendor-portal'
 import { createAdminClient } from '@/lib/supabase/server'
@@ -23,7 +23,7 @@ async function loadOwned(auth: Extract<Awaited<ReturnType<typeof requireUser>>, 
 
 // GET — download the contract file (App Flow §4 "Download"): 302 to a 60 s signed URL. The
 // bucket has no storage policies; access is the RLS-checked contract read above.
-export async function GET(_request: Request, { params }: Params) {
+export const GET = withErrors(async function GET(_request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const { id } = await params
@@ -33,11 +33,11 @@ export async function GET(_request: Request, { params }: Params) {
   const { data: signed } = await createAdminClient().storage.from(BUCKET).createSignedUrl(contract.document_path, 60, { download: name })
   if (!signed?.signedUrl) return apiError(404, 'not_found', 'No contract file uploaded.')
   return NextResponse.redirect(signed.signedUrl, 302)
-}
+})
 
 // POST — upload / replace the contract file (P9 defaults: contract-documents bucket at
 // {org_id}/{contract_id}/…, Backend Schema §9). Same sign → upload → confirm steps as P6-1.
-export async function POST(request: Request, { params }: Params) {
+export const POST = withErrors(async function POST(request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const { id } = await params
@@ -85,4 +85,4 @@ export async function POST(request: Request, { params }: Params) {
     metadata: { rfp_id: contract.rfp_id, vendor_account_id: contract.vendor_account_id, contract_id: id },
   })
   return NextResponse.json({ fileName: body.fileName }, { status: 201 })
-}
+})

@@ -1,19 +1,19 @@
 import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
-import { apiError, requireUser, validationError } from '@/lib/api'
+import { apiError, requireUser, validationError, withErrors } from '@/lib/api'
 import { loadTemplates } from '@/lib/scoring-templates'
 import { templateSchema } from '@/lib/schemas/evaluation'
 
 // Scoring templates (Backend Schema §2.16, decision P4-8 — built in Phase 7). Not in Backend
 // Schema §8. PM only (RLS scoring_templates_pm); soft delete.
-export async function GET() {
+export const GET = withErrors(async function GET() {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   return NextResponse.json({ templates: await loadTemplates(auth.supabase) })
-}
+})
 
-export async function POST(request: Request) {
+export const POST = withErrors(async function POST(request: Request) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const parsed = templateSchema.safeParse(await request.json().catch(() => null))
@@ -40,4 +40,4 @@ export async function POST(request: Request) {
     after: { name: parsed.data.name, criteria },
   })
   return NextResponse.json({ id: data.id }, { status: 201 })
-}
+})

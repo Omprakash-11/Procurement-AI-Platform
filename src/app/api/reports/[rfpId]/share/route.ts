@@ -2,7 +2,7 @@ import { addDays } from 'date-fns'
 import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
-import { apiError, appUrl, requireUser } from '@/lib/api'
+import { apiError, appUrl, requireUser, withErrors } from '@/lib/api'
 import { newShareToken, SHARE_LINK_DAYS } from '@/lib/share-links'
 
 type Params = { params: Promise<{ rfpId: string }> }
@@ -14,7 +14,7 @@ async function loadRfp(auth: Extract<Awaited<ReturnType<typeof requireUser>>, { 
 
 // POST /api/reports/[rfpId]/share — decision P7-6 (not in Backend Schema §8): "Copy Share
 // Link" (App Flow §4) — a read-only URL valid for 7 days. PM only (RLS report_share_links_pm).
-export async function POST(_request: Request, { params }: Params) {
+export const POST = withErrors(async function POST(_request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const { rfpId } = await params
@@ -43,10 +43,10 @@ export async function POST(_request: Request, { params }: Params) {
     metadata: { rfp_id: rfpId },
   })
   return NextResponse.json({ url: appUrl(`/share/report/${token}`), expiresAt }, { status: 201 })
-}
+})
 
 // DELETE /api/reports/[rfpId]/share — revoke every live link for this report (P7-6).
-export async function DELETE(_request: Request, { params }: Params) {
+export const DELETE = withErrors(async function DELETE(_request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const { rfpId } = await params
@@ -73,4 +73,4 @@ export async function DELETE(_request: Request, { params }: Params) {
     })
   }
   return NextResponse.json({ revoked: revoked?.length ?? 0 })
-}
+})

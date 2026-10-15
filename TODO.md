@@ -84,6 +84,8 @@ Legend: `[ ]` todo · `[x]` done · **⛔ Gate** = decision needed before coding
 | 2026-10-15 | **P9-1** Cron routes accept GET (Vercel Cron) and POST, both requiring `Authorization: Bearer <CRON_SECRET>`. Migration 0034: `process_contract_renewals()` returns the contracts it flagged; route emails the PM per contract (once — only active → expiring_soon flags). SLA reminder once per approval (email + in-app), dedup via activity log. |
 | 2026-10-15 | **P9-2 (#40)** `activity_log` read: PM all; DH / FA only entries about RFPs they can read (`can_read_rfp`), their own actions, their own requirements / assigned approvals. Migration 0034. |
 | 2026-10-15 | **Defaults (P8/P9)** FA contracts: API read only, no page (#22). No email preferences in v1 (#15). New requirement department pre-filled from the DH's last requirement (profiles have none). Initiate Renewal = prefilled Create RFP modal, then prefilled Invite Vendor modal (PM confirms). Contract file in `contract-documents` at `{org_id}/{contract_id}/…`, signed-URL download, replaceable. Contracts sort: end date (default) / value / vendor; days-remaining colours = SLA colours. Approval-request email deep link to `/approvals/[id]` (works signed out via `redirectTo`). |
+| 2026-10-15 | **P10-1** Global search built in Phase 10 (no phase owned it): `GET /api/search?q=` over rfps / vendor_accounts / contracts via the tsvector columns (never ILIKE), RLS-scoped per role; overlay top 5 per category, `/search` full list; role-aware links. |
+| 2026-10-15 | **P10-2** 500 page "Contact support" → optional `NEXT_PUBLIC_SUPPORT_EMAIL` (added to `.env.example`), falls back to `RESEND_FROM_EMAIL`; hidden when neither is set. |
 | 2026-10-14 | **CLAUDE.md over Tech Stack §8.2** Kanban optimistic updates live in the TanStack Query cache, not Zustand ("never put API data in Zustand"). |
 | 2026-10-14 | **#34** Repo already exists — no `git init`; scaffold in a temp dir and copy in; single commit at the end of the verified phase. |
 
@@ -384,15 +386,30 @@ Verify (2026-10-15):
 
 ## Phase 10 — Error handling & polish
 
-- [ ] `not-found.tsx`, `error.tsx`, per-segment `error.tsx` and `loading.tsx`
-- [ ] All API handlers try/catch → `{ error, code }`
-- [ ] Inline errors: extraction/scoring retry, file type/size, weights, overrides, duplicate invite, session expired, unauthorised
-- [ ] Skeleton loading states; empty tables everywhere
-- [ ] Toasts per Content Guidelines §6.8
-- [ ] Focus rings, `aria-label`s, `sr-only` spinner text, reduced motion
-- [ ] `npm run build` and `npm run lint` clean
+⛔ Gates resolved 2026-10-15: P10-1 (global search built here), P10-2 (support email for the 500 page).
 
-Verify: the 10 Plan Phase 10 checklist items (404, inline upload error, retry, skeletons, empty tables, keyboard nav, focus rings, error shape, build, lint). Commit.
+- [x] Root `not-found.tsx` + in-shell `(dashboard)/not-found.tsx` + vendor `not-found.tsx`; `error.tsx` for root, (dashboard), (auth), vendor; `global-error.tsx` (Retry + contact support, P10-2)
+- [x] `loading.tsx` skeletons for every data-fetching segment (dashboard, pipeline, RFP, vendor, report, requirements, approvals, contracts, activity, search, settings, account, vendor portal) with sr-only "Loading…" status; kanban skeleton cards (Phase 5)
+- [x] All 57 API handlers wrapped in `withErrors()` → `{ error, code }` on any throw; Postgres / PostgREST codes mapped (23505 / 23503 / 23514 / 42501 / PGRST116)
+- [x] Client requests hitting an expired session → `/login?reason=expired` with the App Flow §10.2 toast
+- [x] App Flow §10.2 copy: "Score must be between 0 and 10.", "Scoring failed for this vendor." + "Retry scoring"
+- [x] Toasts per Content Guidelines §6.8: top-right, 4px left border + CheckCircle2 / XCircle / AlertTriangle / Info, max 3, close on hover
+- [x] Global `prefers-reduced-motion` rule; base focus ring for links / tabindex elements; icon-only buttons and spinners audited (no gaps)
+- [x] Global search (P10-1): `/api/search` (prefix tsquery on the tsvector columns, RLS-scoped, role-aware links), overlay top 5 per category, `/search` results page
+- [x] Found by regression: with streamed pages, a file picked before hydration was silently dropped → file pickers (vendor upload, requirement attachments, contract file) stay disabled until hydrated (`useHydrated`, same rule as #57)
+- Known limitation: an in-app `notFound()` after a `loading.tsx` skeleton has streamed returns HTTP 200 (Next.js streaming) — the 404 page and `noindex` are still rendered
+
+Verify (2026-10-15 — headless Chromium against the production build):
+- [x] /nonexistent → custom 404; deleted entity → 404 inside the shell
+- [x] Invalid upload type → inline error, no toast; form errors inline
+- [x] Failed extraction shows Retry + message (Phase 7 suite)
+- [x] Skeletons while pages load (route delayed); sr-only loading status
+- [x] Empty tables keep headers, no messaging; kanban 0-count columns
+- [x] Keyboard order logical; focus ring on every focused element; no unlabeled icon buttons
+- [x] API errors return `{ error, code }` JSON (401 / 400 / 404 / 409, cron 401, tsquery-hostile search input)
+- [x] Session expiry → login toast; unauthorised page → dashboard toast; reduced motion suppresses animation
+- [x] `npm run build` 0 TypeScript errors; `npm run lint` 0 warnings — Phase 10 suite 35/35; full regression P3 73, P4 53, P5 64, P6 56, P7 103 (live Gemini), P8+9 115
+- [x] Commit
 
 ## Phase 11 — E2E testing
 

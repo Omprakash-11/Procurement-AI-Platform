@@ -2,7 +2,7 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
-import { apiError, validationError } from '@/lib/api'
+import { apiError, validationError, withErrors } from '@/lib/api'
 import { vendorAcceptRequestSchema } from '@/lib/schemas/vendor-portal'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { lookupVendorInvite } from '@/lib/vendor/invite'
@@ -14,7 +14,7 @@ const INTERNAL = 'This email is used by a ProcureMaster team account — ask the
 
 // GET /api/vendor/invite/[token] — Plan Phase 6: validate the token; return what the invite
 // page shows (org, RFP title, message, account mode). No internal data.
-export async function GET(_request: Request, { params }: Params) {
+export const GET = withErrors(async function GET(_request: Request, { params }: Params) {
   const { token } = await params
   const invite = await lookupVendorInvite(token)
   if (!invite.valid) return apiError(410, 'invite_invalid', INVALID, { inviterEmail: invite.inviterEmail })
@@ -26,12 +26,12 @@ export async function GET(_request: Request, { params }: Params) {
     email: invite.email,
     mode: invite.mode,
   })
-}
+})
 
 // POST /api/vendor/invite/[token] — accept. New vendors get a confirmed account (the emailed
 // link proves the inbox — P6-4); existing vendor logins confirm with their password; internal
 // emails are refused. The token is single-use (accepted atomically). Signs the vendor in.
-export async function POST(request: Request, { params }: Params) {
+export const POST = withErrors(async function POST(request: Request, { params }: Params) {
   const { token } = await params
   const invite = await lookupVendorInvite(token)
   if (!invite.valid) return apiError(410, 'invite_invalid', INVALID, { inviterEmail: invite.inviterEmail })
@@ -109,4 +109,4 @@ export async function POST(request: Request, { params }: Params) {
   const { error: signInError } = await supabase.auth.signInWithPassword({ email: invite.email, password: body.password })
   if (signInError) return NextResponse.json({ redirectTo: '/login' })
   return NextResponse.json({ redirectTo: `/vendor/rfp/${invite.rfpId}` })
-}
+})

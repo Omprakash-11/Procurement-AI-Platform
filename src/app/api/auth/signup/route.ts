@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 
 import SignupConfirmationEmail from '@/emails/signup-confirmation'
 import { logActivity } from '@/lib/activity'
-import { apiError, appUrl, validationError } from '@/lib/api'
+import { apiError, appUrl, validationError, withErrors } from '@/lib/api'
 import { findAuthUserByEmail } from '@/lib/auth/find-user'
 import { sendEmail } from '@/lib/email/send'
 import { signupSchema } from '@/lib/schemas/auth'
@@ -17,7 +17,7 @@ const MAX_CONFIRMATIONS_PER_DAY = 5
 // Signing up again for a still-pending signup never deletes or edits it — it only re-sends
 // the link to the same inbox (≤ 1 per minute, ≤ 5 per day). The response is identical
 // either way. Already-confirmed accounts get 409.
-export async function POST(request: Request) {
+export const POST = withErrors(async function POST(request: Request) {
   const parsed = signupSchema.safeParse(await request.json().catch(() => ({})))
   if (!parsed.success) return validationError(parsed.error)
   const { fullName, email, orgName } = parsed.data
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
   if (!(await reserveConfirmation(profile.org_id, userId))) await sendConfirmation(email)
 
   return NextResponse.json({ status: 'confirmation_sent' }, { status: 201 })
-}
+})
 
 /** The org of a still-pending signup (unconfirmed, no password, not onboarded), else null. */
 async function pendingSignupOrg(userId: string, emailConfirmed: boolean, appMetadata: Record<string, unknown>): Promise<string | null> {

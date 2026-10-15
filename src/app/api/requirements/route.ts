@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
-import { apiError, requireUser, validationError } from '@/lib/api'
+import { apiError, requireUser, validationError, withErrors } from '@/lib/api'
 import { notifyPmOfRequirement } from '@/lib/processing/notify'
 import { requirementRequestSchema } from '@/lib/schemas/requirement'
 
 // GET /api/requirements — Plan Phase 8: DH sees their own, PM sees all (RLS
 // requirements_dh_read / requirements_pm_read decide).
-export async function GET() {
+export const GET = withErrors(async function GET() {
   const auth = await requireUser(['procurement_manager', 'department_head'])
   if (!auth.ok) return auth.response
   const { data } = await auth.supabase
@@ -16,11 +16,11 @@ export async function GET() {
     .eq('is_deleted', false)
     .order('created_at', { ascending: false })
   return NextResponse.json({ requirements: data ?? [] })
-}
+})
 
 // POST /api/requirements — App Flow §5 Submit Requirement (DH): "Submit Requirement" or
 // "Save as Draft". On submit the PM gets an in-app notification (App Flow §5).
-export async function POST(request: Request) {
+export const POST = withErrors(async function POST(request: Request) {
   const auth = await requireUser(['department_head'])
   if (!auth.ok) return auth.response
   const parsed = requirementRequestSchema.safeParse(await request.json().catch(() => null))
@@ -59,5 +59,5 @@ export async function POST(request: Request) {
   })
   if (v.submit) await notifyPmOfRequirement(orgId, req.id, req.title)
   return NextResponse.json({ requirement: req }, { status: 201 })
-}
+})
 

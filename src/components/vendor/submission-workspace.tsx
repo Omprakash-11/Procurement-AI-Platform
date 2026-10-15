@@ -15,6 +15,7 @@ import { fetchJson } from '@/lib/fetch-json'
 import { ACCEPTED_EXTENSIONS, ACCEPTED_TYPES, MAX_UPLOAD_BYTES } from '@/lib/schemas/vendor-portal'
 import { cn } from '@/lib/utils'
 import type { ClientVendorRfp } from '@/lib/vendor/portal'
+import { useHydrated } from '@/lib/use-hydrated'
 
 const TYPE_ERROR = 'Only PDF, DOCX, and XLSX files are supported.' // App Flow §10.2
 const SIZE_ERROR = 'File exceeds the 50MB limit. Please compress or split the file.'
@@ -63,6 +64,7 @@ export function SubmissionWorkspace({ initial }: { initial: ClientVendorRfp }) {
   })
   const refresh = () => queryClient.invalidateQueries({ queryKey: key })
 
+  const hydrated = useHydrated()
   const [uploads, setUploads] = useState<UploadRow[]>([])
   const [inputError, setInputError] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
@@ -193,7 +195,7 @@ export function SubmissionWorkspace({ initial }: { initial: ClientVendorRfp }) {
                 >
                   <Upload className="size-6 text-muted-foreground" aria-hidden="true" />
                   <p className="text-sm text-foreground">Drag files here, or</p>
-                  <Button type="button" variant="outline" size="sm" onClick={() => fileInput.current?.click()}>
+                  <Button type="button" variant="outline" size="sm" disabled={!hydrated} onClick={() => fileInput.current?.click()}>
                     Browse files
                   </Button>
                   <p className="text-xs text-muted-foreground">PDF, DOCX or XLSX · up to 50MB each</p>
@@ -204,6 +206,7 @@ export function SubmissionWorkspace({ initial }: { initial: ClientVendorRfp }) {
                     accept=".pdf,.docx,.xlsx"
                     className="sr-only"
                     aria-label="Upload proposal documents"
+                    disabled={!hydrated}
                     aria-describedby={inputError ? 'upload-error' : undefined}
                     onChange={(e) => {
                       if (e.target.files) addFiles(e.target.files)

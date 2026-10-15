@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
 import { afterApproved, afterRejected } from '@/lib/approval-workflow'
-import { apiError, requireUser, validationError } from '@/lib/api'
+import { apiError, requireUser, validationError, withErrors } from '@/lib/api'
 import { decisionSchema, REJECTION_REASON_LABEL } from '@/lib/schemas/approval'
 
 type Params = { params: Promise<{ id: string }> }
@@ -11,7 +11,7 @@ type Params = { params: Promise<{ id: string }> }
 // comment mandatory, reject needs a reason. RLS approvals_fa_decide (0027): only the FA the
 // request was sent to, only while pending. Approval → contract + vendor Contracted (trigger
 // §6.4); the rest of P8-6 follows in afterApproved / afterRejected.
-export async function PATCH(request: Request, { params }: Params) {
+export const PATCH = withErrors(async function PATCH(request: Request, { params }: Params) {
   const auth = await requireUser(['finance_approver'])
   if (!auth.ok) return auth.response
   const { id } = await params
@@ -68,4 +68,4 @@ export async function PATCH(request: Request, { params }: Params) {
   if (d.decision === 'approved') await afterApproved(ctx)
   else await afterRejected({ ...ctx, reason: d.reason })
   return NextResponse.json({ status: d.decision })
-}
+})

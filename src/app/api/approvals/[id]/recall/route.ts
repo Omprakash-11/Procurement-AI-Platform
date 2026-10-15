@@ -2,14 +2,14 @@ import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
 import { backToShortlisted } from '@/lib/approval-workflow'
-import { apiError, requireUser } from '@/lib/api'
+import { apiError, requireUser, withErrors } from '@/lib/api'
 
 type Params = { params: Promise<{ id: string }> }
 
 // PATCH /api/approvals/[id]/recall — Backend Schema §8.6 (PM recalls a pending request).
 // RLS approvals_pm_recall (0027): pending → recalled with recalled_by = self. P8-6: the RFP
 // goes back to Shortlisted.
-export async function PATCH(_request: Request, { params }: Params) {
+export const PATCH = withErrors(async function PATCH(_request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const { id } = await params
@@ -39,4 +39,4 @@ export async function PATCH(_request: Request, { params }: Params) {
   })
   await backToShortlisted({ orgId: before.org_id, rfpId: before.rfp_id, rfpTitle, actorId: auth.userId })
   return NextResponse.json({ status: 'recalled' })
-}
+})

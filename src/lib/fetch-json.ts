@@ -16,6 +16,11 @@ export async function fetchJson<T>(input: string, init?: RequestInit): Promise<T
   const body: unknown = await res.json().catch(() => ({}))
   if (!res.ok) {
     const failure = body as Partial<ApiFailure>
+    // App Flow §10.2: an expired session on any request → /login with the "session expired" toast.
+    if (res.status === 401 && failure.code === 'unauthenticated' && typeof window !== 'undefined') {
+      const next = window.location.pathname + window.location.search
+      window.location.assign(`/login?reason=expired&redirectTo=${encodeURIComponent(next)}`)
+    }
     throw new ApiError(res.status, {
       error: failure.error ?? 'Something went wrong. Please try again.',
       code: failure.code ?? 'unknown_error',

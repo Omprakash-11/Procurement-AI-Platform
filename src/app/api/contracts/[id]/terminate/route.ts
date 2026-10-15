@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
-import { apiError, requireUser, validationError } from '@/lib/api'
+import { apiError, requireUser, validationError, withErrors } from '@/lib/api'
 import { terminateSchema } from '@/lib/schemas/contract'
 
 type Params = { params: Promise<{ id: string }> }
 
 // PATCH /api/contracts/[id]/terminate — Backend Schema §8.7 / App Flow §4 "Mark as Terminated"
 // (confirmation modal with a reason). PM only.
-export async function PATCH(request: Request, { params }: Params) {
+export const PATCH = withErrors(async function PATCH(request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const { id } = await params
@@ -33,4 +33,4 @@ export async function PATCH(request: Request, { params }: Params) {
     metadata: { rfp_id: before.rfp_id, vendor_account_id: before.vendor_account_id, contract_id: id },
   })
   return NextResponse.json({ status: 'terminated' })
-}
+})

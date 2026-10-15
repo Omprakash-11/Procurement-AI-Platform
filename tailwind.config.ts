@@ -49,6 +49,13 @@ const config: Config = {
           neutral: { DEFAULT: 'hsl(var(--status-neutral))', foreground: 'hsl(var(--status-neutral-fg))' },
           ai: { DEFAULT: 'hsl(var(--status-ai))', foreground: 'hsl(var(--status-ai-fg))' },
         },
+        // Chart / toast accents (Content Guidelines §6.8, §9) — tokens in globals.css.
+        chart: {
+          good: 'hsl(var(--chart-good))',
+          mid: 'hsl(var(--chart-mid))',
+          'risk-high': 'hsl(var(--chart-risk-high))',
+          'risk-low': 'hsl(var(--chart-risk-low))',
+        },
       },
       boxShadow: {
         sm: '0 1px 2px 0 rgb(0 0 0 / 0.05)',

@@ -2,7 +2,7 @@ import { waitUntil } from '@vercel/functions'
 import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
-import { apiError, requireUser, validationError } from '@/lib/api'
+import { apiError, requireUser, validationError, withErrors } from '@/lib/api'
 import { EVALUATED_STATUSES } from '@/lib/evaluation'
 import { EVALUATION_LOCKED, evaluationLockedMessage } from '@/lib/processing/locks'
 import { scoreEvaluation, STALE_SCORING_MS } from '@/lib/processing/scoring'
@@ -18,7 +18,7 @@ type Params = { params: Promise<{ evaluationId: string }> }
 // run's rows). Body { vendorAccountId } retries one vendor within the current run.
 // Decision P7 defaults: starting evaluation moves submitted vendors to Under Review and the
 // RFP to Under Evaluation. Scoring is async; the PM is notified when it completes.
-export async function POST(request: Request, { params }: Params) {
+export const POST = withErrors(async function POST(request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const { evaluationId } = await params
@@ -115,4 +115,4 @@ export async function POST(request: Request, { params }: Params) {
 
   waitUntil(scoreEvaluation({ evaluationId, run, ...(vendorAccountId ? { vendorAccountIds: [vendorAccountId] } : {}) }))
   return NextResponse.json({ status: 'scoring_in_progress', run }, { status: 202 })
-}
+})

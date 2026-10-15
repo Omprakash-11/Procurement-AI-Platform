@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
-import { apiError, requireUser, validationError } from '@/lib/api'
+import { apiError, requireUser, validationError, withErrors } from '@/lib/api'
 import { vendorEntryActionSchema } from '@/lib/schemas/vendor-invite'
 import { SHORTLISTABLE, VENDOR_STATUS_LABEL, type VendorStatus } from '@/lib/status'
 import { notifyVendorOutcome } from '@/lib/vendor-notify'
@@ -13,7 +13,7 @@ type Params = { params: Promise<{ id: string; entryId: string }> }
 //   remove      — only while Invited: expires pending invites, entry → Not Selected (kept).
 //   shortlist   — once submitted: → Shortlisted (vendor emailed once — P5-6).
 //   unshortlist — Shortlisted → Under Review (no email).
-export async function PATCH(request: Request, { params }: Params) {
+export const PATCH = withErrors(async function PATCH(request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const { id: rfpId, entryId } = await params
@@ -88,4 +88,4 @@ export async function PATCH(request: Request, { params }: Params) {
   }
 
   return NextResponse.json({ status: next.status })
-}
+})

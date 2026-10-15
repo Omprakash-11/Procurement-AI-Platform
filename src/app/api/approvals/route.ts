@@ -5,7 +5,7 @@ import { logActivity } from '@/lib/activity'
 import { loadApprovals } from '@/lib/approval-data'
 import { formatSla } from '@/lib/approval-workflow'
 import { addBusinessDaysUtc, SLA_BUSINESS_DAYS } from '@/lib/approvals'
-import { apiError, appUrl, requireUser, validationError } from '@/lib/api'
+import { apiError, appUrl, requireUser, validationError, withErrors } from '@/lib/api'
 import { sendEmail } from '@/lib/email/send'
 import { notify } from '@/lib/processing/notify'
 import { approvalRequestSchema } from '@/lib/schemas/approval'
@@ -13,18 +13,18 @@ import { createAdminClient } from '@/lib/supabase/server'
 
 // GET /api/approvals — Backend Schema §8.6: PM sees all; FA sees pending (?status=all for the
 // queue's "All" tab). RLS approvals_read scopes to the org and to PM / FA.
-export async function GET(request: Request) {
+export const GET = withErrors(async function GET(request: Request) {
   const auth = await requireUser(['procurement_manager', 'finance_approver'])
   if (!auth.ok) return auth.response
   const all = new URL(request.url).searchParams.get('status') === 'all'
   const isFa = auth.claims.role === 'finance_approver'
   return NextResponse.json({ approvals: await loadApprovals(auth.supabase, isFa && !all ? { status: 'pending' } : {}) })
-}
+})
 
 // POST /api/approvals — Backend Schema §8.6 / App Flow §4 "Submit for Approval". Decision P8-1:
 // the PM picks a shortlisted vendor and a Finance Approver; P8-2 SLA = 3 business days (UTC);
 // P8-6 the RFP moves to Approval Pending. One pending request per RFP (unique index).
-export async function POST(request: Request) {
+export const POST = withErrors(async function POST(request: Request) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const parsed = approvalRequestSchema.safeParse(await request.json().catch(() => null))
@@ -107,4 +107,4 @@ export async function POST(request: Request) {
     }
   }
   return NextResponse.json({ id: approval.id, slaDueAt }, { status: 201 })
-}
+})

@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 
 import VendorInviteEmail from '@/emails/vendor-invite'
 import { logActivity } from '@/lib/activity'
-import { apiError, appUrl, requireUser, validationError } from '@/lib/api'
+import { apiError, appUrl, requireUser, validationError, withErrors } from '@/lib/api'
 import { INVITE_LIMIT_MESSAGE, reserveInviteEmail } from '@/lib/auth/invite-limit'
 import { sendEmail } from '@/lib/email/send'
 import { escapeLike } from '@/lib/rfps'
@@ -19,7 +19,7 @@ const INVITABLE_STAGES = ['requirements_received', 'rfp_created', 'vendors_invit
 // account per (org, email), reused across the org's RFPs; each invite adds an
 // rfp_vendor_entry + a vendor_invite (64-char token, 72 h, single use). S-2: the email is
 // reserved against the org's daily invite quota first. P5-1: first invite → Vendors Invited.
-export async function POST(request: Request, { params }: Params) {
+export const POST = withErrors(async function POST(request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const orgId = auth.claims.org_id
@@ -146,4 +146,4 @@ export async function POST(request: Request, { params }: Params) {
   }
 
   return NextResponse.json({ entryId: entry.id, email }, { status: 201 })
-}
+})

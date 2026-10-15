@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { apiError, requireUser } from '@/lib/api'
+import { apiError, requireUser, withErrors } from '@/lib/api'
 import { AiError } from '@/lib/gemini/client'
 import { EVALUATION_LOCKED, evaluationLockedMessage } from '@/lib/processing/locks'
 import { generateReport } from '@/lib/processing/report'
@@ -12,7 +12,7 @@ type Params = { params: Promise<{ evaluationId: string }> }
 // POST /api/process/report/[evaluationId] — Backend Schema §8.4 / PRD §5.5.1: executive summary
 // and advisory recommendation from the current scores and compliance flags. Synchronous (one
 // AI call); failures come back inline with Retry.
-export async function POST(_request: Request, { params }: Params) {
+export const POST = withErrors(async function POST(_request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const { evaluationId } = await params
@@ -37,4 +37,4 @@ export async function POST(_request: Request, { params }: Params) {
     return apiError(502, 'ai_failed', err instanceof AiError ? err.message : 'The report could not be generated. Please retry.')
   }
   return NextResponse.json({ status: 'report_generated', rfpId: evaluation.rfp_id })
-}
+})

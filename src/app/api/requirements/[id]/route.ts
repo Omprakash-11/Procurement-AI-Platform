@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
-import { apiError, requireUser, validationError } from '@/lib/api'
+import { apiError, requireUser, validationError, withErrors } from '@/lib/api'
 import { notifyPmOfRequirement } from '@/lib/processing/notify'
 import { requirementRequestSchema } from '@/lib/schemas/requirement'
 
@@ -10,19 +10,19 @@ type Params = { params: Promise<{ id: string }> }
 const FIELDS = 'id, org_id, title, description, department, budget_estimate, required_by, priority, status, linked_rfp_id, raised_by, created_at, updated_at'
 
 // GET /api/requirements/[id] — DH (own) / PM (any in org); RLS decides.
-export async function GET(_request: Request, { params }: Params) {
+export const GET = withErrors(async function GET(_request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager', 'department_head'])
   if (!auth.ok) return auth.response
   const { id } = await params
   const { data } = await auth.supabase.from('requirements').select(FIELDS).eq('id', id).eq('is_deleted', false).maybeSingle()
   if (!data) return apiError(404, 'not_found', 'Requirement not found.')
   return NextResponse.json({ requirement: data })
-}
+})
 
 // PATCH /api/requirements/[id] — App Flow §5 "Edit option: only available when status is
 // Draft or Submitted (before PM has actioned)". DH only (RLS requirements_dh_update). A draft
 // can be submitted; a submitted requirement never goes back to draft.
-export async function PATCH(request: Request, { params }: Params) {
+export const PATCH = withErrors(async function PATCH(request: Request, { params }: Params) {
   const auth = await requireUser(['department_head'])
   if (!auth.ok) return auth.response
   const { id } = await params
@@ -69,4 +69,4 @@ export async function PATCH(request: Request, { params }: Params) {
   })
   if (submittedNow) await notifyPmOfRequirement(orgId, id, after.title)
   return NextResponse.json({ requirement: after })
-}
+})

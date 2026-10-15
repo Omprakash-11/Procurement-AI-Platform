@@ -18,6 +18,7 @@ import { ApiError, fetchJson } from '@/lib/fetch-json'
 import { PRIORITY_LABEL } from '@/lib/requirements'
 import { ATTACHMENT_SIZE_ERROR, MAX_ATTACHMENT_BYTES, requirementSchema, type RequirementFormInput, type RequirementFormValues } from '@/lib/schemas/requirement'
 import { ACCEPTED_EXTENSIONS, ACCEPTED_TYPES } from '@/lib/schemas/vendor-portal'
+import { useHydrated } from '@/lib/use-hydrated'
 import { mimeForExtension } from '@/lib/vendor/mime'
 import { Constants } from '@/types/database'
 
@@ -41,6 +42,7 @@ const formatSize = (bytes: number) => (bytes >= 1_048_576 ? `${(bytes / 1_048_57
 export function RequirementForm({ mode, requirementId, isDraft, defaults, attachments = [] }: RequirementFormProps) {
   const router = useRouter()
   const fileInput = useRef<HTMLInputElement>(null)
+  const hydrated = useHydrated()
   const [files, setFiles] = useState<File[]>([])
   const [existing, setExisting] = useState(attachments)
   const [fileError, setFileError] = useState<string | null>(null)
@@ -192,8 +194,8 @@ export function RequirementForm({ mode, requirementId, isDraft, defaults, attach
             </li>
           ))}
         </ul>
-        <input ref={fileInput} type="file" multiple accept={ACCEPTED_EXTENSIONS.join(',')} className="sr-only" aria-label="Add attachments" onChange={(e) => addFiles(e.target.files)} />
-        <Button type="button" variant="outline" size="sm" onClick={() => fileInput.current?.click()}>
+        <input ref={fileInput} type="file" multiple accept={ACCEPTED_EXTENSIONS.join(',')} className="sr-only" aria-label="Add attachments" disabled={!hydrated} onChange={(e) => addFiles(e.target.files)} />
+        <Button type="button" variant="outline" size="sm" disabled={!hydrated} onClick={() => fileInput.current?.click()}>
           <Paperclip aria-hidden="true" />
           Add files
         </Button>

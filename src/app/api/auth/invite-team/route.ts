@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 
 import TeamInviteEmail from '@/emails/team-invite'
 import { logActivity } from '@/lib/activity'
-import { apiError, appUrl, requireUser, validationError } from '@/lib/api'
+import { apiError, appUrl, requireUser, validationError, withErrors } from '@/lib/api'
 import { findAuthUserByEmail } from '@/lib/auth/find-user'
 import { INVITE_LIMIT_MESSAGE, reserveInviteEmail } from '@/lib/auth/invite-limit'
 import { issueTeamInviteToken } from '@/lib/auth/team-invite'
@@ -17,7 +17,7 @@ type InviteResult = { email: string; status: 'sent' | 'error'; message?: string 
 // unconfirmed auth user with role/org in app_metadata (the trigger creates the pending
 // profile), then emails a 24 h single-use acceptance link. Re-inviting a pending invitee
 // re-sends a fresh link (P3-5).
-export async function POST(request: Request) {
+export const POST = withErrors(async function POST(request: Request) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
 
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ results })
-}
+})
 
 const ALREADY_HAS_ACCOUNT = 'This person already has a ProcureMaster account.'
 

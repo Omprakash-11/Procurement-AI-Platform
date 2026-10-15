@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
-import { apiError, INTERNAL_ROLES, requireUser, validationError } from '@/lib/api'
+import { apiError, INTERNAL_ROLES, requireUser, validationError, withErrors } from '@/lib/api'
 import { accountProfileSchema } from '@/lib/schemas/auth'
 import { LOGO_MAX_BYTES, LOGO_MIME_TYPES } from '@/lib/schemas/organisation'
 import { createAdminClient } from '@/lib/supabase/server'
@@ -10,7 +10,7 @@ const IMAGE_EXT: Record<(typeof LOGO_MIME_TYPES)[number], string> = { 'image/png
 
 // PATCH /api/account — App Flow §9.1 "Save Profile": full name + optional profile photo.
 // multipart/form-data. Photos: org-assets/{org_id}/avatars/{user_id}.{ext} (#55).
-export async function PATCH(request: Request) {
+export const PATCH = withErrors(async function PATCH(request: Request) {
   const auth = await requireUser(INTERNAL_ROLES)
   if (!auth.ok) return auth.response
   const orgId = auth.claims.org_id
@@ -59,4 +59,4 @@ export async function PATCH(request: Request) {
     after,
   })
   return NextResponse.json({ status: 'saved' })
-}
+})

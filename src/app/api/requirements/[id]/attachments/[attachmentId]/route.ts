@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
-import { apiError, requireUser } from '@/lib/api'
+import { apiError, requireUser, withErrors } from '@/lib/api'
 import { ATTACHMENT_BUCKET, removeAttachmentObject } from '@/lib/requirement-files'
 import { createAdminClient } from '@/lib/supabase/server'
 
@@ -10,7 +10,7 @@ type Params = { params: Promise<{ id: string; attachmentId: string }> }
 // GET — download (302 to a 60 s signed URL). The row is read with the caller's client, so RLS
 // (requirement_attachments_read: PM, or the DH who raised it) is the access check; the bucket
 // itself has no policies, so the URL is signed with the service role afterwards.
-export async function GET(_request: Request, { params }: Params) {
+export const GET = withErrors(async function GET(_request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager', 'department_head'])
   if (!auth.ok) return auth.response
   const { id, attachmentId } = await params
@@ -19,10 +19,10 @@ export async function GET(_request: Request, { params }: Params) {
   const { data: signed } = await createAdminClient().storage.from(ATTACHMENT_BUCKET).createSignedUrl(att.storage_path, 60, { download: att.file_name })
   if (!signed?.signedUrl) return apiError(404, 'not_found', 'Attachment not found.')
   return NextResponse.redirect(signed.signedUrl, 302)
-}
+})
 
 // DELETE — the raising DH removes an attachment while the requirement is still editable.
-export async function DELETE(_request: Request, { params }: Params) {
+export const DELETE = withErrors(async function DELETE(_request: Request, { params }: Params) {
   const auth = await requireUser(['department_head'])
   if (!auth.ok) return auth.response
   const { id, attachmentId } = await params
@@ -47,4 +47,4 @@ export async function DELETE(_request: Request, { params }: Params) {
     before: { file_name: att.file_name },
   })
   return NextResponse.json({ status: 'removed' })
-}
+})

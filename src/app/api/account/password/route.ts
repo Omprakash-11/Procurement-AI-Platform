@@ -2,11 +2,11 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
-import { apiError, INTERNAL_ROLES, requireUser, validationError } from '@/lib/api'
+import { apiError, INTERNAL_ROLES, requireUser, validationError, withErrors } from '@/lib/api'
 import { changePasswordRequestSchema } from '@/lib/schemas/auth'
 
 // POST /api/account/password — App Flow §9.1 "Update Password": current, new, confirm.
-export async function POST(request: Request) {
+export const POST = withErrors(async function POST(request: Request) {
   const auth = await requireUser(INTERNAL_ROLES)
   if (!auth.ok) return auth.response
   if (!auth.email) return apiError(400, 'no_email', 'Your account has no email address.')
@@ -44,4 +44,4 @@ export async function POST(request: Request) {
     })
   }
   return NextResponse.json({ status: 'updated' })
-}
+})

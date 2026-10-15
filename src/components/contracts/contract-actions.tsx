@@ -19,6 +19,7 @@ import { ApiError, fetchJson } from '@/lib/fetch-json'
 import { useCreateRfp } from '@/lib/queries/rfps'
 import { alertDaysSchema, contractEditSchema, terminateSchema, type ContractEditInput, type ContractEditValues, type TerminateRequest } from '@/lib/schemas/contract'
 import { ACCEPTED_EXTENSIONS } from '@/lib/schemas/vendor-portal'
+import { useHydrated } from '@/lib/use-hydrated'
 import { mimeForExtension } from '@/lib/vendor/mime'
 
 type Props = { contract: ContractDetail; departments: string[] }
@@ -171,6 +172,7 @@ export function AlertDaysEditor({ contractId, value, disabled }: { contractId: s
 export function ContractDocument({ contract }: { contract: ContractDetail }) {
   const router = useRouter()
   const input = useRef<HTMLInputElement>(null)
+  const hydrated = useHydrated()
   const [error, setError] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
 
@@ -215,8 +217,8 @@ export function ContractDocument({ contract }: { contract: ContractDetail }) {
       ) : (
         <p className="text-sm text-muted-foreground">No contract file uploaded yet.</p>
       )}
-      <input ref={input} type="file" className="sr-only" accept={ACCEPTED_EXTENSIONS.join(',')} aria-label="Upload contract file" onChange={(e) => upload(e.target.files?.[0])} />
-      <Button variant="ghost" size="sm" disabled={uploading} onClick={() => input.current?.click()}>
+      <input ref={input} type="file" className="sr-only" accept={ACCEPTED_EXTENSIONS.join(',')} aria-label="Upload contract file" disabled={!hydrated} onChange={(e) => upload(e.target.files?.[0])} />
+      <Button variant="ghost" size="sm" disabled={uploading || !hydrated} onClick={() => input.current?.click()}>
         <Upload aria-hidden="true" />
         {uploading ? 'Uploading…' : contract.hasDocument ? 'Replace file' : 'Upload file'}
       </Button>

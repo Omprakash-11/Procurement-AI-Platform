@@ -65,7 +65,7 @@ export function ScoresTab({ rfpId, vendorAccountId, initialData, locked }: Score
               }
             }}
           >
-            Retry
+            Retry scoring
           </Button>
         )}
       </div>

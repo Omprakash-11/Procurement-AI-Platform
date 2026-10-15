@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
-import { apiError, INTERNAL_ROLES, requireUser } from '@/lib/api'
+import { apiError, INTERNAL_ROLES, requireUser, withErrors } from '@/lib/api'
 import { createAdminClient } from '@/lib/supabase/server'
 import { requireVendor } from '@/lib/vendor/portal'
 import { removeObject } from '@/lib/vendor/storage'
@@ -12,7 +12,7 @@ type Params = { params: Promise<{ id: string; docId: string }> }
 // GET /api/submissions/[id]/documents/[docId] — Backend Schema §8.3 (internal): document with
 // extraction status + extracted fields, for the PM's polling. RLS (documents_internal_read /
 // can_read_rfp) decides access. Vendors never get extraction data.
-export async function GET(_request: Request, { params }: Params) {
+export const GET = withErrors(async function GET(_request: Request, { params }: Params) {
   const auth = await requireUser(INTERNAL_ROLES)
   if (!auth.ok) return auth.response
   const { id, docId } = await params
@@ -26,11 +26,11 @@ export async function GET(_request: Request, { params }: Params) {
     .maybeSingle()
   if (!doc) return apiError(404, 'not_found', 'Document not found.')
   return NextResponse.json({ document: doc })
-}
+})
 
 // DELETE /api/submissions/[id]/documents/[docId] — Backend Schema §8.3 (vendor), only while the
 // submission is still a draft. Decision P6-2: the draft file and its row are deleted for good.
-export async function DELETE(_request: Request, { params }: Params) {
+export const DELETE = withErrors(async function DELETE(_request: Request, { params }: Params) {
   const auth = await requireVendor()
   if (!auth.ok) return auth.response
   const { id, docId } = await params
@@ -61,4 +61,4 @@ export async function DELETE(_request: Request, { params }: Params) {
     metadata: { rfp_id: owned.rfp.rfpId, vendor_account_id: owned.rfp.vendorAccountId, submission_id: id },
   })
   return NextResponse.json({ status: 'removed' })
-}
+})

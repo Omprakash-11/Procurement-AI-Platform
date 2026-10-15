@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
-import { apiError, requireUser, validationError } from '@/lib/api'
+import { apiError, requireUser, validationError, withErrors } from '@/lib/api'
 import { flagActionSchema } from '@/lib/schemas/evaluation'
 import { FLAG_TYPE_LABEL } from '@/lib/vendor-detail'
 
@@ -10,7 +10,7 @@ type Params = { params: Promise<{ id: string }> }
 // PATCH /api/compliance-flags/[id] — not in Backend Schema §8; added for the Compliance tab's
 // Acknowledge / Escalate actions (App Flow §4). PM only (RLS flags_pm_write). The link from an
 // escalated flag to the approval request comes with Phase 8 (#15).
-export async function PATCH(request: Request, { params }: Params) {
+export const PATCH = withErrors(async function PATCH(request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const { id } = await params
@@ -45,4 +45,4 @@ export async function PATCH(request: Request, { params }: Params) {
     metadata: { rfp_id: flag.documents.submissions.rfp_id, vendor_account_id: flag.documents.submissions.vendor_account_id },
   })
   return NextResponse.json({ status })
-}
+})

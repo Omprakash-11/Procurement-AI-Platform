@@ -2,7 +2,7 @@ import { waitUntil } from '@vercel/functions'
 import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
-import { apiError, requireUser } from '@/lib/api'
+import { apiError, requireUser, withErrors } from '@/lib/api'
 import { rerunSubmissionCompliance } from '@/lib/processing/documents'
 import { EVALUATION_LOCKED, evaluationLockedMessage } from '@/lib/processing/locks'
 
@@ -13,7 +13,7 @@ type Params = { params: Promise<{ submissionId: string }> }
 // POST /api/process/compliance/[submissionId] — Backend Schema §8.4. Decision P7-4: compliance
 // already runs with extraction on submit; this route re-runs it for a submission's processed
 // documents (open flags are replaced; acknowledged / escalated ones are kept).
-export async function POST(_request: Request, { params }: Params) {
+export const POST = withErrors(async function POST(_request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const { submissionId } = await params
@@ -38,4 +38,4 @@ export async function POST(_request: Request, { params }: Params) {
   })
   waitUntil(rerunSubmissionCompliance(submissionId))
   return NextResponse.json({ status: 'running' }, { status: 202 })
-}
+})

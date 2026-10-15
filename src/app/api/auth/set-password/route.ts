@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
 
-import { apiError, requireUser, validationError } from '@/lib/api'
+import { apiError, requireUser, validationError, withErrors } from '@/lib/api'
 import { userNeedsPassword } from '@/lib/auth/needs-password'
 import { setPasswordRequestSchema } from '@/lib/schemas/auth'
 import { createAdminClient } from '@/lib/supabase/server'
 
 // POST /api/auth/set-password — decision S-1. Only for a just-confirmed signup that has no
 // password yet; it is not a way to change a password without knowing the current one.
-export async function POST(request: Request) {
+export const POST = withErrors(async function POST(request: Request) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
 
@@ -31,4 +31,4 @@ export async function POST(request: Request) {
   const { error: signInError } = await auth.supabase.auth.signInWithPassword({ email: auth.email, password: parsed.data.password })
   if (signInError) return NextResponse.json({ redirectTo: '/login' })
   return NextResponse.json({ redirectTo: '/onboarding' })
-}
+})

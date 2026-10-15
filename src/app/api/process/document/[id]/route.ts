@@ -2,7 +2,7 @@ import { waitUntil } from '@vercel/functions'
 import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
-import { apiError, requireUser } from '@/lib/api'
+import { apiError, requireUser, withErrors } from '@/lib/api'
 import { claimDocument, processDocument, STALE_PROCESSING_MS } from '@/lib/processing/documents'
 
 export const maxDuration = 300 // decision P7-2
@@ -12,7 +12,7 @@ type Params = { params: Promise<{ id: string }> }
 // POST /api/process/document/[id] — Backend Schema §8.4. Decision P7-2: the automatic run is
 // started in-process by the submit route; this route is the PM's Retry (failed documents, or
 // ones left queued / processing by a killed function).
-export async function POST(_request: Request, { params }: Params) {
+export const POST = withErrors(async function POST(_request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const { id } = await params
@@ -43,4 +43,4 @@ export async function POST(_request: Request, { params }: Params) {
   })
   waitUntil(processDocument(id, true))
   return NextResponse.json({ status: 'processing' }, { status: 202 })
-}
+})

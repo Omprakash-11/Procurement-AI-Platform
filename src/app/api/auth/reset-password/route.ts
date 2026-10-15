@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server'
 
 import PasswordResetEmail from '@/emails/password-reset'
-import { appUrl } from '@/lib/api'
+import { appUrl, withErrors } from '@/lib/api'
 import { sendEmail } from '@/lib/email/send'
 import { resetRequestSchema } from '@/lib/schemas/auth'
 import { createAdminClient } from '@/lib/supabase/server'
 
 // POST /api/auth/reset-password — App Flow §3: always answers with success whether or not
 // the email exists (no account enumeration). Link valid 60 minutes (Supabase otp_expiry).
-export async function POST(request: Request) {
+export const POST = withErrors(async function POST(request: Request) {
   const parsed = resetRequestSchema.safeParse(await request.json().catch(() => ({})))
   if (parsed.success) {
     const { email } = parsed.data
@@ -24,4 +24,4 @@ export async function POST(request: Request) {
     }
   }
   return NextResponse.json({ status: 'sent' })
-}
+})

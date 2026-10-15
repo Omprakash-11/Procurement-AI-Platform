@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
 
-import { apiError, validationError } from '@/lib/api'
+import { apiError, validationError, withErrors } from '@/lib/api'
 import { resetPasswordConfirmSchema } from '@/lib/schemas/auth'
 import { createClient } from '@/lib/supabase/server'
 
 // POST /api/auth/reset-password/confirm — verifies the one-time recovery link, sets the new
 // password, then signs out so the user signs in fresh (App Flow §3: redirect to /login).
-export async function POST(request: Request) {
+export const POST = withErrors(async function POST(request: Request) {
   const parsed = resetPasswordConfirmSchema.safeParse(await request.json().catch(() => ({})))
   if (!parsed.success) return validationError(parsed.error)
 
@@ -27,4 +27,4 @@ export async function POST(request: Request) {
 
   await supabase.auth.signOut()
   return NextResponse.json({ status: 'updated' })
-}
+})

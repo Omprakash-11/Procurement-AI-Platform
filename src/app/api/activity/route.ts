@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
 
 import { EVENT_GROUPS, loadActivity, type EventGroup } from '@/lib/activity-feed'
-import { INTERNAL_ROLES, requireUser } from '@/lib/api'
+import { INTERNAL_ROLES, requireUser, withErrors } from '@/lib/api'
 
 // GET /api/activity — Backend Schema §8.9: paginated activity for the org, 50 per page
 // (?cursor=<created_at> for the next page; ?type=<group>, ?from / ?to dates). All internal
 // roles; RLS (P9-2) scopes DH and FA. Optional ?rfpId (&vendorAccountId) narrows to one RFP /
 // one vendor within it (App Flow §8.2 per-vendor section).
-export async function GET(request: Request) {
+export const GET = withErrors(async function GET(request: Request) {
   const auth = await requireUser(INTERNAL_ROLES)
   if (!auth.ok) return auth.response
   const p = new URL(request.url).searchParams
@@ -23,4 +23,4 @@ export async function GET(request: Request) {
     ...(role ? { role } : {}),
   })
   return NextResponse.json(result)
-}
+})

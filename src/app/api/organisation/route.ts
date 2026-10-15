@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
-import { apiError, requireUser, validationError } from '@/lib/api'
+import { apiError, requireUser, validationError, withErrors } from '@/lib/api'
 import { LOGO_MAX_BYTES, LOGO_MIME_TYPES, orgProfileSchema } from '@/lib/schemas/organisation'
 import { createAdminClient } from '@/lib/supabase/server'
 
@@ -14,7 +14,7 @@ const LOGO_EXT: Record<(typeof LOGO_MIME_TYPES)[number], string> = {
 // PATCH /api/organisation — org profile (name, currency, optional logo) for onboarding
 // step 1 and later /settings/organisation. Not in Backend Schema §8 (TODO.md #45); added
 // so the change goes through the API with an activity-log entry. multipart/form-data.
-export async function PATCH(request: Request) {
+export const PATCH = withErrors(async function PATCH(request: Request) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const orgId = auth.claims.org_id
@@ -61,4 +61,4 @@ export async function PATCH(request: Request) {
     after,
   })
   return NextResponse.json({ organisation: after })
-}
+})

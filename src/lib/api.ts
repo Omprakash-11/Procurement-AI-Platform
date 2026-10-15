@@ -48,3 +48,37 @@ export function appUrl(path: string): string {
   const base = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
   return new URL(path, base).toString()
 }
+
+// Phase 10: Postgres / PostgREST error codes → user-friendly { error, code }.
+const DB_ERRORS: Record<string, [number, string, string]> = {
+  '23505': [409, 'conflict', 'That already exists.'],
+  '23503': [409, 'conflict', 'This item is linked to something that no longer exists.'],
+  '23514': [400, 'validation_error', 'Some values are not allowed.'],
+  '42501': [403, 'forbidden', 'You do not have permission to do that.'],
+  PGRST116: [404, 'not_found', 'Not found.'],
+}
+
+/** Map a thrown error (Supabase / Postgres / anything) to the CLAUDE.md error response. */
+export function errorResponse(err: unknown) {
+  const code = (err as { code?: unknown } | null)?.code
+  const mapped = typeof code === 'string' ? DB_ERRORS[code] : undefined
+  if (mapped) return apiError(mapped[0], mapped[1], mapped[2])
+  console.error('Unhandled API error', err)
+  return apiError(500, 'internal_error', 'Something went wrong. Please try again.')
+}
+
+/**
+ * Phase 10: every Route Handler is wrapped so an unexpected throw still answers with the
+ * { error, code } shape instead of an HTML error page.
+ */
+export function withErrors<A extends unknown[]>(handler: (...args: A) => Promise<Response>) {
+  return async (...args: A): Promise<Response> => {
+    try {
+      return await handler(...args)
+    } catch (err) {
+      // next/navigation redirect()/notFound() signal by throwing — let them through.
+      if (err && typeof err === 'object' && 'digest' in err && typeof (err as { digest: unknown }).digest === 'string' && /^NEXT_/.test((err as { digest: string }).digest)) throw err
+      return errorResponse(err)
+    }
+  }
+}

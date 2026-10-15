@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
-import { apiError, requireUser, validationError } from '@/lib/api'
+import { apiError, requireUser, validationError, withErrors } from '@/lib/api'
 import { ATTACHMENT_BUCKET, removeAttachmentObject, requirementDir } from '@/lib/requirement-files'
 import { ATTACHMENT_SIZE_ERROR, attachmentUploadSchema, MAX_ATTACHMENT_BYTES } from '@/lib/schemas/requirement'
 import { createAdminClient } from '@/lib/supabase/server'
@@ -17,7 +17,7 @@ const TYPE_ERROR = 'Only PDF, DOCX, and XLSX files are supported.' // App Flow Â
 // (P6-1): 'sign' returns a signed upload URL for a server-chosen path; 'confirm' checks the
 // stored object (exists, â‰¤ 20MB, file signature) and records it. Only the DH who raised the
 // requirement, while it is still editable (Draft / Submitted).
-export async function POST(request: Request, { params }: Params) {
+export const POST = withErrors(async function POST(request: Request, { params }: Params) {
   const auth = await requireUser(['department_head'])
   if (!auth.ok) return auth.response
   const { id } = await params
@@ -78,4 +78,4 @@ export async function POST(request: Request, { params }: Params) {
     after: { file_name: att.file_name, file_type: att.file_type, file_size_bytes: att.file_size_bytes },
   })
   return NextResponse.json({ attachment: att }, { status: 201 })
-}
+})

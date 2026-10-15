@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
 
-import { apiError, validationError } from '@/lib/api'
+import { apiError, validationError, withErrors } from '@/lib/api'
 import { createSubmissionSchema } from '@/lib/schemas/vendor-portal'
 import { createAdminClient } from '@/lib/supabase/server'
 import { getVendorRfp, listVendorRfps, requireVendor } from '@/lib/vendor/portal'
 
 // GET /api/submissions — Plan Phase 6 (vendor): the vendor's RFPs and submission states.
 // Whitelisted fields only (P2-4).
-export async function GET() {
+export const GET = withErrors(async function GET() {
   const auth = await requireVendor()
   if (!auth.ok) return auth.response
   const rfps = await listVendorRfps(auth.userId)
@@ -22,11 +22,11 @@ export async function GET() {
       submission: r.submission,
     })),
   })
-}
+})
 
 // POST /api/submissions — Plan Phase 6 (vendor): get or create the vendor's in-progress
 // submission for an RFP they were invited to (one per vendor per RFP — Schema §2.8).
-export async function POST(request: Request) {
+export const POST = withErrors(async function POST(request: Request) {
   const auth = await requireVendor()
   if (!auth.ok) return auth.response
   const parsed = createSubmissionSchema.safeParse(await request.json().catch(() => ({})))
@@ -49,4 +49,4 @@ export async function POST(request: Request) {
   }
   if (error || !data) return apiError(500, 'create_failed', 'We could not start your submission. Please try again.')
   return NextResponse.json({ submissionId: data.id }, { status: 201 })
-}
+})

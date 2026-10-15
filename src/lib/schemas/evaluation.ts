@@ -35,7 +35,7 @@ export const scoreRequestSchema = z.object({
 })
 
 export const overrideSchema = z.object({
-  score: z.coerce.number({ invalid_type_error: 'Enter a score from 0 to 10.' }).min(0, 'Score must be 0–10.').max(10, 'Score must be 0–10.'),
+  score: z.coerce.number({ invalid_type_error: 'Score must be between 0 and 10.' }).min(0, 'Score must be between 0 and 10.').max(10, 'Score must be between 0 and 10.'),
   justification: z.string().trim().min(1, 'Add a justification.').max(1000, 'Keep it under 1000 characters.'),
 })
 export type OverrideRequest = z.infer<typeof overrideSchema>

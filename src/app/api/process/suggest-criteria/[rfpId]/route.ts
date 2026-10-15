@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { apiError, requireUser } from '@/lib/api'
+import { apiError, requireUser, withErrors } from '@/lib/api'
 import { AiError, generateJson } from '@/lib/gemini/client'
 import { CRITERIA_SUGGESTION_PROMPT } from '@/lib/gemini/prompts'
 import { EVALUATION_LOCKED, evaluationLockedMessage } from '@/lib/processing/locks'
@@ -28,7 +28,7 @@ function normaliseWeights<T extends { weight: number }>(items: T[]): T[] {
 // POST /api/process/suggest-criteria/[rfpId] — Backend Schema §8.4, PRD §5.3.3: 5–10 weighted
 // criteria from the RFP and what the submitted proposals cover. Returned for the PM to edit;
 // nothing is saved until PUT /api/evaluations/[rfpId]/criteria.
-export async function POST(_request: Request, { params }: Params) {
+export const POST = withErrors(async function POST(_request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const { rfpId } = await params
@@ -69,4 +69,4 @@ export async function POST(_request: Request, { params }: Params) {
     console.error('suggest-criteria failed', err)
     return apiError(502, 'ai_failed', err instanceof AiError ? err.message : 'The AI could not suggest criteria. Please retry.')
   }
-}
+})

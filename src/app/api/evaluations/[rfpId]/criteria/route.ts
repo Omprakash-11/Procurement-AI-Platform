@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
-import { apiError, requireUser, validationError } from '@/lib/api'
+import { apiError, requireUser, validationError, withErrors } from '@/lib/api'
 import { EVALUATION_LOCKED, evaluationLockedMessage } from '@/lib/processing/locks'
 import { STALE_SCORING_MS } from '@/lib/processing/scoring'
 import { criteriaSchema } from '@/lib/schemas/evaluation'
@@ -11,7 +11,7 @@ type Params = { params: Promise<{ rfpId: string }> }
 // PUT /api/evaluations/[rfpId]/criteria — Backend Schema §8.5: save the confirmed criteria,
 // replacing the existing ones (their scores go with them; a re-score follows). Weights must
 // add up to exactly 100 (App Flow §4 criteria modal).
-export async function PUT(request: Request, { params }: Params) {
+export const PUT = withErrors(async function PUT(request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const { rfpId } = await params
@@ -69,4 +69,4 @@ export async function PUT(request: Request, { params }: Params) {
     metadata: { rfp_id: rfpId, template_id: parsed.data.templateId ?? null },
   })
   return NextResponse.json({ evaluationId: evaluation.id })
-}
+})

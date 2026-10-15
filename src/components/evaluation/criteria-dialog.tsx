@@ -133,7 +133,7 @@ export function CriteriaDialog({ rfpId, evaluationId, existing, open, onOpenChan
                     </SelectContent>
                   </Select>
                 </div>
-                <Button type="button" variant="outline" disabled={suggest.isPending} onClick={runSuggest}>
+                <Button type="button" variant="outline" disabled={suggest.isPending} aria-busy={suggest.isPending || undefined} onClick={runSuggest}>
                   {suggest.isPending && <Loader2 className="motion-safe:animate-spin" aria-hidden="true" />}
                   Suggest with AI
                 </Button>

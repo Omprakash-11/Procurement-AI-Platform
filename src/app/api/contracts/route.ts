@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { apiError, requireUser } from '@/lib/api'
+import { apiError, requireUser, withErrors } from '@/lib/api'
 import { loadContracts, type ContractSort, type ContractStatus } from '@/lib/contracts'
 import { Constants } from '@/types/database'
 
@@ -8,7 +8,7 @@ const SORTS: ContractSort[] = ['end_date', 'value', 'vendor']
 
 // GET /api/contracts — Backend Schema §8.7: list with status filter and sort. PM and FA (FA read
 // via RLS contracts_fa_read; FA has no Contracts page — P9 defaults, #22).
-export async function GET(request: Request) {
+export const GET = withErrors(async function GET(request: Request) {
   const auth = await requireUser(['procurement_manager', 'finance_approver'])
   if (!auth.ok) return auth.response
   const params = new URL(request.url).searchParams
@@ -21,4 +21,4 @@ export async function GET(request: Request) {
     ...(sort ? { sort: sort as ContractSort } : {}),
   })
   return NextResponse.json({ contracts })
-}
+})

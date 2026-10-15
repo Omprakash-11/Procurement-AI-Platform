@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
-import { apiError, requireUser, validationError } from '@/lib/api'
+import { apiError, requireUser, validationError, withErrors } from '@/lib/api'
 import { noteSchema } from '@/lib/schemas/evaluation'
 import type { VendorNote } from '@/lib/vendor-detail'
 
@@ -9,7 +9,7 @@ type Params = { params: Promise<{ id: string; entryId: string }> }
 
 // Decision P7-5: internal, append-only notes per vendor per RFP (App Flow §4 Tab 4). Not in
 // Backend Schema §8. PM only (RLS vendor_notes_pm_*); vendors have no access at all.
-export async function GET(_request: Request, { params }: Params) {
+export const GET = withErrors(async function GET(_request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const { id, entryId } = await params
@@ -22,9 +22,9 @@ export async function GET(_request: Request, { params }: Params) {
     .order('created_at', { ascending: false })
   const notes: VendorNote[] = (data ?? []).map((n) => ({ id: n.id, body: n.body, createdAt: n.created_at, authorName: n.profiles?.full_name ?? 'Unknown' }))
   return NextResponse.json({ notes })
-}
+})
 
-export async function POST(request: Request, { params }: Params) {
+export const POST = withErrors(async function POST(request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const { id, entryId } = await params
@@ -58,4 +58,4 @@ export async function POST(request: Request, { params }: Params) {
     metadata: { rfp_id: id, vendor_account_id: entry.vendor_account_id, note_id: note.id },
   })
   return NextResponse.json({ id: note.id, createdAt: note.created_at }, { status: 201 })
-}
+})

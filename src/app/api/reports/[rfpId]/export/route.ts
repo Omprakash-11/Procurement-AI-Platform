@@ -1,5 +1,5 @@
 import { logActivity } from '@/lib/activity'
-import { apiError, requireUser } from '@/lib/api'
+import { apiError, requireUser, withErrors } from '@/lib/api'
 import { loadReport } from '@/lib/evaluation'
 import { htmlToPdf } from '@/lib/reports/pdf'
 import { reportHtml } from '@/lib/reports/pdf-html'
@@ -10,7 +10,7 @@ type Params = { params: Promise<{ rfpId: string }> }
 
 // POST /api/reports/[rfpId]/export — Backend Schema §8.5 / Tech Stack §10.1: report data →
 // HTML template → Puppeteer → PDF download. PM only. Data is read with the PM's client (RLS).
-export async function POST(_request: Request, { params }: Params) {
+export const POST = withErrors(async function POST(_request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const { rfpId } = await params
@@ -47,4 +47,4 @@ export async function POST(_request: Request, { params }: Params) {
       'Cache-Control': 'no-store',
     },
   })
-}
+})

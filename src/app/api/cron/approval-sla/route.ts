@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import ApprovalSlaReminderEmail from '@/emails/approval-sla-reminder'
 import { logActivity } from '@/lib/activity'
 import { formatSla } from '@/lib/approval-workflow'
-import { appUrl } from '@/lib/api'
+import { appUrl, withErrors } from '@/lib/api'
 import { cronUnauthorized } from '@/lib/cron'
 import { sendEmail } from '@/lib/email/send'
 import { notify } from '@/lib/processing/notify'
@@ -74,5 +74,5 @@ async function run(request: Request) {
   return NextResponse.json({ checked: due?.length ?? 0, reminded })
 }
 
-export const GET = run
-export const POST = run
+export const GET = withErrors(run)
+export const POST = withErrors(run)

@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
-import { apiError, requireUser, validationError } from '@/lib/api'
+import { apiError, requireUser, validationError, withErrors } from '@/lib/api'
 import { templateSchema } from '@/lib/schemas/evaluation'
 
 type Params = { params: Promise<{ id: string }> }
 
 // PATCH / DELETE (soft) a scoring template — decision P4-8. PM only (RLS scoring_templates_pm).
-export async function PATCH(request: Request, { params }: Params) {
+export const PATCH = withErrors(async function PATCH(request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const { id } = await params
@@ -32,9 +32,9 @@ export async function PATCH(request: Request, { params }: Params) {
     after: { name: parsed.data.name, criteria },
   })
   return NextResponse.json({ id })
-}
+})
 
-export async function DELETE(_request: Request, { params }: Params) {
+export const DELETE = withErrors(async function DELETE(_request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const { id } = await params
@@ -55,4 +55,4 @@ export async function DELETE(_request: Request, { params }: Params) {
     after: { is_deleted: true },
   })
   return NextResponse.json({ status: 'deleted' })
-}
+})

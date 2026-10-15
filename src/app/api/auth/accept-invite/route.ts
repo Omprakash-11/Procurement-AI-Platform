@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
-import { apiError, validationError } from '@/lib/api'
+import { apiError, validationError, withErrors } from '@/lib/api'
 import { consumeTeamInviteToken, verifyTeamInviteToken } from '@/lib/auth/team-invite'
 import { acceptInviteRequestSchema } from '@/lib/schemas/auth'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 
 // POST /api/auth/accept-invite — Backend Schema §8.1. Activates the invited profile: sets
 // the password and name, confirms the email, consumes the single-use token, signs in.
-export async function POST(request: Request) {
+export const POST = withErrors(async function POST(request: Request) {
   const parsed = acceptInviteRequestSchema.safeParse(await request.json().catch(() => ({})))
   if (!parsed.success) return validationError(parsed.error)
   const { token, fullName, password } = parsed.data
@@ -51,4 +51,4 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ redirectTo: '/dashboard' })
-}
+})

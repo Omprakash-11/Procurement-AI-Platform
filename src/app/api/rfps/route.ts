@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
-import { apiError, requireUser, validationError } from '@/lib/api'
+import { apiError, requireUser, validationError, withErrors } from '@/lib/api'
 import { rfpRequestSchema } from '@/lib/schemas/rfp'
 import { RFP_STAGES, type RfpStatus } from '@/lib/status'
 
@@ -10,7 +10,7 @@ const STATUSES = RFP_STAGES.map((s) => s.status)
 // GET /api/rfps — Backend Schema §8.2 (PM): RFPs for the org with filters, plus (decision
 // P5-2) submitted requirements that have no RFP yet, for the "Requirements Received" column.
 // Filters: department, status, from/to (submission deadline — P5 default), q (title search).
-export async function GET(request: NextRequest) {
+export const GET = withErrors(async function GET(request: NextRequest) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const p = request.nextUrl.searchParams
@@ -47,11 +47,11 @@ export async function GET(request: NextRequest) {
     rfps: (rfps ?? []).map(({ rfp_vendor_entries, ...r }) => ({ ...r, vendor_count: rfp_vendor_entries[0]?.count ?? 0 })),
     requirements: requirements ?? [],
   })
-}
+})
 
 // POST /api/rfps — create (PM). The rfp_evaluation_created trigger adds the evaluation.
 // Decision P5-2: with requirementId, links the requirement and moves it to In Progress.
-export async function POST(request: Request) {
+export const POST = withErrors(async function POST(request: Request) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const orgId = auth.claims.org_id
@@ -127,4 +127,4 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ rfp }, { status: 201 })
-}
+})

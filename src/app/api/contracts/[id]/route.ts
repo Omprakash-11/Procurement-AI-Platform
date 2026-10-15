@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
 import { loadActivity } from '@/lib/activity-feed'
-import { apiError, requireUser, validationError } from '@/lib/api'
+import { apiError, requireUser, validationError, withErrors } from '@/lib/api'
 import { loadContract, statusAfterEdit } from '@/lib/contracts'
 import { contractPatchSchema } from '@/lib/schemas/contract'
 
@@ -11,7 +11,7 @@ type Params = { params: Promise<{ id: string }> }
 const COLUMNS = 'id, org_id, title, value, payment_terms, start_date, end_date, alert_days, status, rfp_id, vendor_account_id'
 
 // GET /api/contracts/[id] — Backend Schema §8.7: detail with its activity log (PM).
-export async function GET(_request: Request, { params }: Params) {
+export const GET = withErrors(async function GET(_request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const { id } = await params
@@ -19,11 +19,11 @@ export async function GET(_request: Request, { params }: Params) {
   if (!contract) return apiError(404, 'not_found', 'Contract not found.')
   const activity = await loadActivity(auth.supabase, { contractId: id, limit: 50 })
   return NextResponse.json({ contract, activity: activity.items })
-}
+})
 
 // PATCH /api/contracts/[id] — Backend Schema §8.7: value, dates, alert days, terms, name.
 // App Flow §4: the alert threshold can change at any time. Not on terminated contracts.
-export async function PATCH(request: Request, { params }: Params) {
+export const PATCH = withErrors(async function PATCH(request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const { id } = await params
@@ -70,10 +70,10 @@ export async function PATCH(request: Request, { params }: Params) {
     metadata: { rfp_id: before.rfp_id, vendor_account_id: before.vendor_account_id, contract_id: id },
   })
   return NextResponse.json({ contract: after })
-}
+})
 
 // DELETE /api/contracts/[id] — Plan Phase 9: soft delete (CLAUDE.md: never hard-delete).
-export async function DELETE(_request: Request, { params }: Params) {
+export const DELETE = withErrors(async function DELETE(_request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const { id } = await params
@@ -87,4 +87,4 @@ export async function DELETE(_request: Request, { params }: Params) {
     metadata: { rfp_id: before.rfp_id, vendor_account_id: before.vendor_account_id, contract_id: id },
   })
   return NextResponse.json({ status: 'deleted' })
-}
+})

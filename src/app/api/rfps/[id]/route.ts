@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
-import { apiError, INTERNAL_ROLES, requireUser, validationError } from '@/lib/api'
+import { apiError, INTERNAL_ROLES, requireUser, validationError, withErrors } from '@/lib/api'
 import { loadRfpDetail } from '@/lib/rfps'
 import { rfpUpdateSchema } from '@/lib/schemas/rfp'
 import { isDraggableStage, RFP_STATUS_LABEL, type RfpStatus } from '@/lib/status'
@@ -10,19 +10,19 @@ type Params = { params: Promise<{ id: string }> }
 
 // GET /api/rfps/[id] — Backend Schema §8.2 (PM, DH, FA): RFP + vendor list. RLS
 // (can_read_rfp) decides which RFPs a DH / FA may see.
-export async function GET(_request: Request, { params }: Params) {
+export const GET = withErrors(async function GET(_request: Request, { params }: Params) {
   const auth = await requireUser(INTERNAL_ROLES)
   if (!auth.ok) return auth.response
   const { id } = await params
   const detail = await loadRfpDetail(auth.supabase, id)
   if (!detail) return apiError(404, 'not_found', 'RFP not found.')
   return NextResponse.json(detail)
-}
+})
 
 // PATCH /api/rfps/[id] — field edits and/or status (PM). Decision P5-1: Approval Pending /
 // Contracted are workflow-owned (never set here, never left from here); Archived can't be
 // left; 'archived' is only sent by the confirmed "Archive RFP" action.
-export async function PATCH(request: Request, { params }: Params) {
+export const PATCH = withErrors(async function PATCH(request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const { id } = await params
@@ -107,10 +107,10 @@ export async function PATCH(request: Request, { params }: Params) {
   }
 
   return NextResponse.json({ rfp: after })
-}
+})
 
 // DELETE /api/rfps/[id] — soft delete (Backend Schema §8.2; CLAUDE.md: never hard-delete).
-export async function DELETE(_request: Request, { params }: Params) {
+export const DELETE = withErrors(async function DELETE(_request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const { id } = await params
@@ -134,4 +134,4 @@ export async function DELETE(_request: Request, { params }: Params) {
     metadata: { rfp_id: id },
   })
   return NextResponse.json({ status: 'deleted' })
-}
+})

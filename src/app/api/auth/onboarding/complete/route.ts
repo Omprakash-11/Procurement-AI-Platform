@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
-import { apiError, requireUser } from '@/lib/api'
+import { apiError, requireUser, withErrors } from '@/lib/api'
 import { createAdminClient } from '@/lib/supabase/server'
 
 // PATCH /api/auth/onboarding/complete — Implementation Plan Phase 3. Marks the PM's
 // onboarding done; /onboarding is no longer accessible afterwards (App Flow §3.1 step 3).
 // Service role: onboarding_complete is not client-writable (#39 column privileges).
-export async function PATCH() {
+export const PATCH = withErrors(async function PATCH() {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
 
@@ -34,4 +34,4 @@ export async function PATCH() {
     })
   }
   return NextResponse.json({ redirectTo: '/dashboard' })
-}
+})

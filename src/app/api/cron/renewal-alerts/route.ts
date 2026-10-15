@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 
 import RenewalAlertEmail from '@/emails/renewal-alert'
 import { logActivity } from '@/lib/activity'
-import { appUrl } from '@/lib/api'
+import { appUrl, withErrors } from '@/lib/api'
 import { cronUnauthorized } from '@/lib/cron'
 import { sendEmail } from '@/lib/email/send'
 import { createAdminClient } from '@/lib/supabase/server'
@@ -60,5 +60,5 @@ async function run(request: Request) {
   return NextResponse.json({ flagged: flagged?.length ?? 0, emailed })
 }
 
-export const GET = run
-export const POST = run
+export const GET = withErrors(run)
+export const POST = withErrors(run)

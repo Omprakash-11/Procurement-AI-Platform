@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 
 import VendorSubmittedEmail from '@/emails/vendor-submitted'
 import { logActivity } from '@/lib/activity'
-import { apiError, appUrl } from '@/lib/api'
+import { apiError, appUrl, withErrors } from '@/lib/api'
 import { sendEmail } from '@/lib/email/send'
 import { processSubmission } from '@/lib/processing/documents'
 import { createAdminClient } from '@/lib/supabase/server'
@@ -17,7 +17,7 @@ type Params = { params: Promise<{ id: string }> }
 // POST /api/submissions/[id]/submit — Backend Schema §8.3 (vendor): lock the submission.
 // Needs ≥ 1 document and an open RFP (P6-3). Then (P6-6): entry → Submitted, first submission
 // moves the RFP to Submissions In, PM gets an in-app notification + email; processing starts.
-export async function POST(_request: Request, { params }: Params) {
+export const POST = withErrors(async function POST(_request: Request, { params }: Params) {
   const auth = await requireVendor()
   if (!auth.ok) return auth.response
   const { id } = await params
@@ -114,4 +114,4 @@ export async function POST(_request: Request, { params }: Params) {
   }
 
   return NextResponse.json({ status: 'submitted' })
-}
+})

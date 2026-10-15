@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { logActivity } from '@/lib/activity'
-import { apiError, requireUser, validationError } from '@/lib/api'
+import { apiError, requireUser, validationError, withErrors } from '@/lib/api'
 import { EVALUATION_LOCKED, evaluationLockedMessage } from '@/lib/processing/locks'
 import { overrideSchema } from '@/lib/schemas/evaluation'
 
@@ -9,7 +9,7 @@ type Params = { params: Promise<{ scoreId: string }> }
 
 // PATCH /api/scores/[scoreId]/override — Backend Schema §8.5 / PRD §5.3.3: the PM's override is
 // stored next to the AI score (both kept); effective_score is generated from them.
-export async function PATCH(request: Request, { params }: Params) {
+export const PATCH = withErrors(async function PATCH(request: Request, { params }: Params) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
   const { scoreId } = await params
@@ -47,4 +47,4 @@ export async function PATCH(request: Request, { params }: Params) {
     metadata: { rfp_id: score.evaluations.rfp_id, vendor_account_id: score.vendor_account_id },
   })
   return NextResponse.json({ overrideScore: score2dp })
-}
+})
