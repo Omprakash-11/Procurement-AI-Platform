@@ -1,11 +1,15 @@
 import { GoogleGenAI } from '@google/genai'
 import type { ZodType } from 'zod'
 
-// Tech Stack §5 / decision P7-1 (revised 2026-10-15). Server-side only: GEMINI_API_KEY never
+// Tech Stack §5 / decision P7-1 (revised 2026-10-15, Option B: free tier). Server-side only: GEMINI_API_KEY never
 // reaches the client. Never import this file from a client component.
 
-/** Tried in order: each model gets a few attempts on transient errors before the next one. */
-export const MODEL_CHAIN = ['gemini-3.8-flash', 'gemini-3.1-flash-lite'] as const
+/**
+ * Tried in order: each model gets a few attempts on transient errors before the next one.
+ * flash-lite first: it is served on the free tier (this is a demo / portfolio deployment);
+ * 3.8-flash second, which only answers once billing is enabled on the project.
+ */
+export const MODEL_CHAIN = ['gemini-3.1-flash-lite', 'gemini-3.8-flash'] as const
 
 const TIMEOUT_MS = 120_000 // Tech Stack §5.2: generous timeout for large documents
 /** Whole call incl. retries stays inside the processing routes' 300 s maxDuration (P7-2). */
