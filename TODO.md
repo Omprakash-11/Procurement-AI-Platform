@@ -94,6 +94,10 @@ Legend: `[ ]` todo · `[x]` done · **⛔ Gate** = decision needed before coding
 | 2026-10-15 | **P12-2** `DEMO_MODE=1` (off by default): demo accounts can't change password / email / organisation settings or send team invites; outgoing emails are logged, not sent; public signup closed with a notice; login page lists the demo logins. Everything else works normally. |
 | 2026-10-15 | **P12-3** `npm run demo:reset` wipes and reloads the demo organisation only (guarded by its slug); run before demos / recordings. Can be scheduled later if the Vercel plan allows another cron job. |
 | 2026-10-15 | **P12-4** Hosting: Supabase free project + Vercel Hobby on the *.vercel.app address; custom domain and verified Resend sender later, no code change needed (emails off via DEMO_MODE until then). |
+| 2026-10-15 | **P12-5** (security review, Option A) Demo accounts carry `app_metadata.demo_account = true` (set by the demo seed); migration 0035 adds a trigger on `auth.users` that rejects password, email and phone changes for them by any path, including direct Supabase Auth calls. Normal organisations are unaffected. |
+| 2026-10-15 | **P12-6** Visitor guidance: README.md (demo accounts, tour, AI features, local setup); sign-in demo panel says the data is shared and to upload sample documents only; the vendor upload area links two sample proposals served from `public/samples/` (`.pdf` excluded from the middleware matcher). |
+| 2026-10-15 | **P12-7** (Option A) Public sign-in screens use two panels on wide screens: a flat brand-blue panel (no gradient, Content Guidelines §2.4) with the tagline and four factual product highlights, and the form on the right; narrow screens show the form only. Vendor invite screens show the panel without the highlights. No testimonials or invented claims. |
+| 2026-10-15 | **P12-8** (Option A) Nightly demo reset: `/api/cron/demo-reset` (CRON_SECRET, 404 unless DEMO_MODE=1) + third Vercel cron at 20:30 UTC (02:00 IST). Seed logic moved to `scripts/demo/demo-org.mjs`, shared by the CLI (`seed.mjs`) and the route; demo files ship with the route via `outputFileTracingIncludes`. Docs framing: README presents the full production platform first; demonstration mode is a clearly marked optional section. |
 | 2026-10-14 | **CLAUDE.md over Tech Stack §8.2** Kanban optimistic updates live in the TanStack Query cache, not Zustand ("never put API data in Zustand"). |
 | 2026-10-14 | **#34** Repo already exists — no `git init`; scaffold in a temp dir and copy in; single commit at the end of the verified phase. |
 
@@ -447,6 +451,12 @@ Verify (2026-10-15):
 - [x] Fixes found in the demo walkthrough: locked kanban cards no longer `aria-disabled`; signup page reads DEMO_MODE per request; key terms prefer the proposal over the price sheet; dashboard names vendor actors
 - [x] Demo walkthrough (DEMO_MODE, every role) — 14/14 checks
 - [x] `npx playwright test` — 25 passed (long approval tests given a 60 s budget); `npm run build` and `npm run lint` clean
+- [x] P12-5 demo-account protection (migration 0035) — 9/9 checks with throwaway accounts
+- [x] P12-6 README, sign-in and upload notes, sample proposals in `public/samples/`
+- [x] P12-7 two-panel sign-in screens (`src/components/layout/auth-frame.tsx`)
+- [x] P12-8 nightly demo reset route + cron — 9/9 checks; README restructured (platform first, demo optional)
+- [x] Case-study docs in `Docs/case-study/`: customer use case + architecture (6 Mermaid diagrams, all render), linked from README
+- [x] `Docs/case-study/demo-walkthrough.md`: visitor guide (Path A quick tour, Path B full workflow by role); Path B verified end to end in DEMO_MODE with real Gemini
 - [ ] Owner's local testing — pause until the owner confirms
 
 ### 12b — Deploy (only on the owner's explicit go)
@@ -463,7 +473,7 @@ Build:
 - [ ] `supabase link`; `supabase db push --linked`; verify buckets, RLS, auth hook
 - [ ] `npm run demo:seed -- --production` against the hosted project
 - [ ] Vercel deploy; crons active; PDF export works on Vercel
-- [ ] Smoke test every role on the live address; then the use-case docs (after the owner confirms)
+- [ ] Smoke test every role on the live address; add the live link to README.md; then the use-case docs (after the owner confirms)
 
 Later (no code change): custom domain, verified Resend sender, turn emails on by removing `DEMO_MODE` email logging.
 

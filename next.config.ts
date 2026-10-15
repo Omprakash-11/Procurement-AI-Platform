@@ -4,6 +4,8 @@ const nextConfig: NextConfig = {
   // Server-only parsing / PDF libraries load from node_modules at runtime instead of being
   // bundled (pdf-parse and @sparticuz/chromium read files relative to their package).
   serverExternalPackages: ['pdf-parse', 'mammoth', 'xlsx', 'puppeteer-core', '@sparticuz/chromium'],
+  // Decision P12-8: the nightly demo reset uploads the demo documents, so they ship with its function.
+  outputFileTracingIncludes: { '/api/cron/demo-reset': ['./scripts/demo/files/**'] },
   // Decision P10-2: the 500 page's "Contact support" address — NEXT_PUBLIC_SUPPORT_EMAIL, else the
   // (non-secret) email sender address; empty hides the link.
   // Decision P12-2: DEMO_MODE is also needed by the sign-in / sign-up pages.

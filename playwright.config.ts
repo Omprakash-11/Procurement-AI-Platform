@@ -32,6 +32,7 @@ export default defineConfig({
     url: `http://localhost:${PORT}/login`,
     reuseExistingServer: false,
     timeout: 60_000,
-    env: { GEMINI_MOCK: live ? '0' : '1', NEXT_PUBLIC_APP_URL: `http://localhost:${PORT}` },
+    // The suite tests the platform itself, so demonstration mode stays off even if .env.local turns it on.
+    env: { GEMINI_MOCK: live ? '0' : '1', DEMO_MODE: '0', NEXT_PUBLIC_APP_URL: `http://localhost:${PORT}` },
   },
 })

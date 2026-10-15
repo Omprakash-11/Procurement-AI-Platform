@@ -8,6 +8,8 @@ There are four user types: **Procurement Manager** (PM — exactly one per org, 
 
 The north-star metric is **cycle time from RFQ creation to contract signed**. When two valid implementations exist, prefer the one that shortens or de-risks that flow.
 
+**Demonstration mode is an add-on, not the product.** ProcureMaster is built and documented as a complete production platform. Because it isn't operated by real enterprise customers, an optional demonstration layer (`DEMO_MODE=1`, `scripts/demo/`, decisions P12-1 … P12-8 in `TODO.md`) adds a fictional sample company, one-click demo logins, account protections and a nightly reset, so visitors can experience it from the customer's point of view. Never let demo concerns change platform behaviour when `DEMO_MODE` is off, and in docs always describe the platform first and the demo as optional.
+
 ---
 
 ## Rule 0 — The reference docs are the spec

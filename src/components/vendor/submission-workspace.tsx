@@ -199,6 +199,19 @@ export function SubmissionWorkspace({ initial }: { initial: ClientVendorRfp }) {
                     Browse files
                   </Button>
                   <p className="text-xs text-muted-foreground">PDF, DOCX or XLSX · up to 50MB each</p>
+                  {process.env.NEXT_PUBLIC_DEMO_MODE === '1' && (
+                    <p className="text-center text-xs text-muted-foreground" data-testid="demo-upload-note">
+                      Demonstration environment: upload sample documents only, never confidential files. Sample proposals:{' '}
+                      <a className="underline underline-offset-2 hover:text-foreground" href="/samples/Summit-Data-Systems-Backup-DR-Proposal.pdf" download>
+                        Summit
+                      </a>
+                      ,{' '}
+                      <a className="underline underline-offset-2 hover:text-foreground" href="/samples/Harborline-Backup-DR-Proposal.pdf" download>
+                        Harborline
+                      </a>
+                      .
+                    </p>
+                  )}
                   <input
                     ref={fileInput}
                     type="file"

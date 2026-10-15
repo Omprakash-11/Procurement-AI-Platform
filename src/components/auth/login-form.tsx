@@ -98,25 +98,30 @@ export function LoginForm({ redirectTo, reason, demo }: LoginFormProps) {
           </SubmitButton>
         </form>
         {demo && (
-          <section aria-labelledby="demo-accounts" className="mt-8 border-t border-border pt-6" data-testid="demo-accounts">
+          <section aria-labelledby="demo-accounts" className="mt-6 border-t border-border pt-5" data-testid="demo-accounts">
             <h2 id="demo-accounts" className="text-sm font-medium text-foreground">
               Demo accounts
             </h2>
-            <p className="mt-1 text-xs text-muted-foreground">This is a demonstration environment. Choose a role to fill in its sign-in details, then select Sign In.</p>
-            <ul className="mt-3 space-y-1.5">
+            <p className="mt-1 text-xs text-muted-foreground">
+              Shared demonstration with sample data. Choose a role, then select Sign In. Upload sample documents only, never confidential files.
+            </p>
+            <ul className="mt-3 grid grid-cols-2 gap-1.5">
               {demo.logins.map((login) => (
-                <li key={login.email}>
+                <li key={login.email} className="min-w-0">
                   <button
                     type="button"
+                    title={`${login.label} — ${login.email}`}
                     onClick={() => {
                       form.setValue('email', login.email, { shouldValidate: false })
                       form.setValue('password', demo.password, { shouldValidate: false })
                       setFormError(null)
                     }}
-                    className="flex w-full items-center justify-between gap-3 rounded border border-border px-3 py-2 text-left text-sm hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="flex w-full flex-col rounded border border-border px-3 py-1.5 text-left hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <span className="font-medium text-foreground">{login.label}</span>
-                    <span className="truncate text-xs text-muted-foreground">{login.email}</span>
+                    <span className="w-full truncate text-sm font-medium text-foreground">{login.label.replace(/^Vendor — /, '')}</span>
+                    <span className="w-full truncate text-xs text-muted-foreground">
+                      {login.label.startsWith('Vendor — ') ? `Vendor · ${login.email}` : login.email}
+                    </span>
                   </button>
                 </li>
               ))}
