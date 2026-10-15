@@ -4,11 +4,14 @@ import { NextResponse } from 'next/server'
 import { logActivity } from '@/lib/activity'
 import { apiError, INTERNAL_ROLES, requireUser, validationError, withErrors } from '@/lib/api'
 import { changePasswordRequestSchema } from '@/lib/schemas/auth'
+import { demoRestricted, isDemoMode } from '@/lib/demo'
 
 // POST /api/account/password — App Flow §9.1 "Update Password": current, new, confirm.
 export const POST = withErrors(async function POST(request: Request) {
   const auth = await requireUser(INTERNAL_ROLES)
   if (!auth.ok) return auth.response
+  // Decision P12-2: shared demo accounts must stay usable for every visitor.
+  if (isDemoMode()) return demoRestricted('Changing the password')
   if (!auth.email) return apiError(400, 'no_email', 'Your account has no email address.')
 
   const parsed = changePasswordRequestSchema.safeParse(await request.json().catch(() => ({})))

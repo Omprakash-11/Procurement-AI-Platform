@@ -10,6 +10,7 @@ import { sendEmail } from '@/lib/email/send'
 import { inviteTeamSchema } from '@/lib/schemas/auth'
 import { createAdminClient } from '@/lib/supabase/server'
 import { ROLE_LABELS } from '@/lib/roles'
+import { demoRestricted, isDemoMode } from '@/lib/demo'
 
 type InviteResult = { email: string; status: 'sent' | 'error'; message?: string }
 
@@ -20,6 +21,8 @@ type InviteResult = { email: string; status: 'sent' | 'error'; message?: string 
 export const POST = withErrors(async function POST(request: Request) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
+  // Decision P12-2: shared demo accounts must stay usable for every visitor.
+  if (isDemoMode()) return demoRestricted('Inviting team members')
 
   const parsed = inviteTeamSchema.safeParse(await request.json().catch(() => ({})))
   if (!parsed.success) return validationError(parsed.error)

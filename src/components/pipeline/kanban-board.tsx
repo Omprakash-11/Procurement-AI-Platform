@@ -147,6 +147,9 @@ function RfpCard({ rfp }: { rfp: PipelineRfp }) {
       style={{ transform: CSS.Transform.toString(transform), transition }}
       {...attributes}
       {...listeners}
+      // A locked-stage card can't be dragged but still opens the RFP: it is not "disabled"
+      // (dnd-kit sets aria-disabled for non-draggable items — wrong for screen readers here).
+      aria-disabled={undefined}
       onClick={() => {
         if (Date.now() - dragState.endedAt > 250) router.push(`/pipeline/rfp/${rfp.id}`)
       }}

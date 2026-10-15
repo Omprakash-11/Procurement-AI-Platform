@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "playwright test"
+    "test": "playwright test",
+    "demo:seed": "node --env-file=.env.local scripts/demo/seed.mjs",
+    "demo:reset": "node --env-file=.env.local scripts/demo/seed.mjs --reset"
   },
   "dependencies": {
     "@dnd-kit/core": "6.3.1",

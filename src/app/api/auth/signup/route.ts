@@ -7,6 +7,7 @@ import { findAuthUserByEmail } from '@/lib/auth/find-user'
 import { sendEmail } from '@/lib/email/send'
 import { signupSchema } from '@/lib/schemas/auth'
 import { createAdminClient } from '@/lib/supabase/server'
+import { demoRestricted, isDemoMode } from '@/lib/demo'
 
 const RESEND_COOLDOWN_SECONDS = 60
 const MAX_CONFIRMATIONS_PER_DAY = 5
@@ -18,6 +19,8 @@ const MAX_CONFIRMATIONS_PER_DAY = 5
 // the link to the same inbox (≤ 1 per minute, ≤ 5 per day). The response is identical
 // either way. Already-confirmed accounts get 409.
 export const POST = withErrors(async function POST(request: Request) {
+  // Decision P12-2: the demonstration uses its prepared accounts; new organisations can't sign up.
+  if (isDemoMode()) return demoRestricted('Creating new workspaces')
   const parsed = signupSchema.safeParse(await request.json().catch(() => ({})))
   if (!parsed.success) return validationError(parsed.error)
   const { fullName, email, orgName } = parsed.data

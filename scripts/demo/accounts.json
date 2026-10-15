@@ -1,0 +1,14 @@
+{
+  "organisation": "Northbridge Industries",
+  "password": "Northbridge2026",
+  "internal": [
+    { "key": "pm", "role": "procurement_manager", "label": "Procurement Manager", "email": "procurement.manager@northbridge.example", "fullName": "Morgan Hayes" },
+    { "key": "dh", "role": "department_head", "label": "Department Head", "email": "department.head@northbridge.example", "fullName": "Alex Rivera" },
+    { "key": "fa", "role": "finance_approver", "label": "Finance Approver", "email": "finance.approver@northbridge.example", "fullName": "Jordan Lee" }
+  ],
+  "vendors": [
+    { "key": "harborline", "label": "Vendor — Harborline Cloud Services", "email": "proposals@harborline.example", "company": "Harborline Cloud Services", "contact": "Taylor Brooks" },
+    { "key": "summit", "label": "Vendor — Summit Data Systems", "email": "bids@summitdata.example", "company": "Summit Data Systems", "contact": "Casey Nguyen" },
+    { "key": "clearpath", "label": "Vendor — ClearPath Security", "email": "sales@clearpath.example", "company": "ClearPath Security", "contact": "Riley Chen" }
+  ]
+}

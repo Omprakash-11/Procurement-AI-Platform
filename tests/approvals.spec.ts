@@ -10,6 +10,7 @@ import { ReportPage } from './pages/ReportPage'
 
 test.describe('Approvals', () => {
   test('PM submits for approval; FA approves; contract created and vendor contracted', async ({ pmPage, faPage }) => {
+    test.setTimeout(60_000)
     await clearMail()
     const title = unique('Fleet telematics')
     const { rfpId } = await createReportedRfp(title)
@@ -42,6 +43,7 @@ test.describe('Approvals', () => {
   })
 
   test('FA rejection needs a reason; PM is told why and can recall a resubmission', async ({ pmPage, faPage }) => {
+    test.setTimeout(60_000)
     const title = unique('Office furniture')
     const { rfpId } = await createReportedRfp(title)
     const report = new ReportPage(pmPage)

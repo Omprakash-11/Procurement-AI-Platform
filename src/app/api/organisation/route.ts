@@ -4,6 +4,7 @@ import { logActivity } from '@/lib/activity'
 import { apiError, requireUser, validationError, withErrors } from '@/lib/api'
 import { LOGO_MAX_BYTES, LOGO_MIME_TYPES, orgProfileSchema } from '@/lib/schemas/organisation'
 import { createAdminClient } from '@/lib/supabase/server'
+import { demoRestricted, isDemoMode } from '@/lib/demo'
 
 const LOGO_EXT: Record<(typeof LOGO_MIME_TYPES)[number], string> = {
   'image/png': 'png',
@@ -17,6 +18,8 @@ const LOGO_EXT: Record<(typeof LOGO_MIME_TYPES)[number], string> = {
 export const PATCH = withErrors(async function PATCH(request: Request) {
   const auth = await requireUser(['procurement_manager'])
   if (!auth.ok) return auth.response
+  // Decision P12-2: shared demo accounts must stay usable for every visitor.
+  if (isDemoMode()) return demoRestricted('Changing organisation settings')
   const orgId = auth.claims.org_id
   if (!orgId) return apiError(403, 'forbidden', 'You do not have permission to do that.')
 

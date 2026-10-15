@@ -1,0 +1,326 @@
+{
+  "capturedAt": "2026-10-15T12:31:41.889Z",
+  "note": "Real Gemini output captured by scripts/demo/capture-ai.mjs; loaded by the demo seed.",
+  "documents": [
+    {
+      "rfp": "storage",
+      "vendor": "harborline",
+      "file_name": "Harborline-Price-Sheet.xlsx",
+      "file_type": "xlsx",
+      "file_size_bytes": 16368,
+      "extraction_status": "extracted",
+      "extraction_error": null,
+      "raw_extraction": {
+        "sla": null,
+        "pricing": "Total: 98400 USD",
+        "termination": null,
+        "vendor_name": "Harborline",
+        "data_privacy": null,
+        "payment_terms": null,
+        "cost_breakdown": "Managed storage, 60 TB: 79200 USD; Standard support (business hours): 12000 USD; Migration services (one-off, year 1): 7200 USD; Optional: 24/7 support add-on: 9600 USD",
+        "differentiators": null,
+        "company_overview": null,
+        "delivery_timeline": null,
+        "warranty_liability": null,
+        "contact_information": null
+      },
+      "extracted_vendor_name": "Harborline",
+      "extracted_pricing": "Total: 98400 USD",
+      "extracted_payment_terms": null,
+      "extracted_delivery": null,
+      "extracted_sla": null,
+      "extracted_warranty": null,
+      "extracted_termination": null,
+      "extracted_data_privacy": null,
+      "compliance_flags": [
+        {
+          "severity": "medium",
+          "flag_type": "fee_structure",
+          "clause_text": "Optional: 24/7 support add-on,9600",
+          "explanation": "The buyer's requirements explicitly mandate 24/7 support, but this is listed as an optional add-on with an additional cost of 9,600 USD per year. This suggests the base price does not cover the mandatory support requirement."
+        },
+        {
+          "severity": "high",
+          "flag_type": "data_breach_notification",
+          "clause_text": null,
+          "explanation": "The provided document contains no information regarding data breach notification obligations, which is a critical legal requirement for a cloud storage platform."
+        },
+        {
+          "severity": "medium",
+          "flag_type": "ip_ownership",
+          "clause_text": null,
+          "explanation": "There is no mention of IP ownership regarding the migration services or any custom configurations, leaving the ownership status of deliverables ambiguous."
+        }
+      ]
+    },
+    {
+      "rfp": "storage",
+      "vendor": "summit",
+      "file_name": "Summit-Data-Systems-Storage-Proposal.pdf",
+      "file_type": "pdf",
+      "file_size_bytes": 52376,
+      "extraction_status": "extracted",
+      "extraction_error": null,
+      "raw_extraction": {
+        "sla": "99.99% monthly availability, 1-hour response for severity 1 incidents, and service credits up to 25% of monthly fees.",
+        "pricing": "USD 112,800 per year for 60 TB. Price increases are capped at 3% per year.",
+        "termination": "Either party may terminate for convenience with 90 days notice after the first year.",
+        "vendor_name": "Summit Data Systems",
+        "data_privacy": "GDPR compliant; breach notification within 24 hours; EU data residency (Frankfurt and Dublin); daily backups retained for 35 days.",
+        "payment_terms": "Quarterly in arrears, net 45 days.",
+        "cost_breakdown": "Includes 24/7 support, migration and onboarding.",
+        "differentiators": "All custom scripts and configurations are owned by the customer.",
+        "company_overview": "18 years in business, 650 staff, ISO 27001 certified and SOC 2 Type II audited, serving over 1,200 enterprise customers.",
+        "delivery_timeline": "Migration in 6 weeks with a dedicated project manager, a solution architect and fortnightly steering reviews.",
+        "warranty_liability": "Three-year term. Mutual liability cap of 12 months of fees; uncapped for data protection breaches and confidentiality.",
+        "contact_information": "Casey Nguyen, Head of Enterprise Sales, casey.nguyen@summitdata.example"
+      },
+      "extracted_vendor_name": "Summit Data Systems",
+      "extracted_pricing": "USD 112,800 per year for 60 TB. Price increases are capped at 3% per year.",
+      "extracted_payment_terms": "Quarterly in arrears, net 45 days.",
+      "extracted_delivery": "Migration in 6 weeks with a dedicated project manager, a solution architect and fortnightly steering reviews.",
+      "extracted_sla": "99.99% monthly availability, 1-hour response for severity 1 incidents, and service credits up to 25% of monthly fees.",
+      "extracted_warranty": "Three-year term. Mutual liability cap of 12 months of fees; uncapped for data protection breaches and confidentiality.",
+      "extracted_termination": "Either party may terminate for convenience with 90 days notice after the first year.",
+      "extracted_data_privacy": "GDPR compliant; breach notification within 24 hours; EU data residency (Frankfurt and Dublin); daily backups retained for 35 days.",
+      "compliance_flags": [
+        {
+          "severity": "low",
+          "flag_type": "price_escalation",
+          "clause_text": "Price increases are capped at 3% per year.",
+          "explanation": "The contract includes a price escalation clause, but it is capped at a reasonable 3% per year, which provides cost predictability for the buyer."
+        }
+      ]
+    },
+    {
+      "rfp": "storage",
+      "vendor": "harborline",
+      "file_name": "Harborline-Cloud-Storage-Proposal.pdf",
+      "file_type": "pdf",
+      "file_size_bytes": 53127,
+      "extraction_status": "extracted",
+      "extraction_error": null,
+      "raw_extraction": {
+        "sla": "99.9% monthly availability, with service credits of 5% of the monthly fee for each 0.1% below target, capped at 15%. Support is available business hours (08:00–18:00 local time).",
+        "pricing": "USD 98,400 per year for 60 TB of managed storage. Capacity above 60 TB is charged at USD 140 per TB per month; data egress and API request charges are billed separately.",
+        "termination": "Initial term is three years. Renews automatically for successive one-year terms unless cancelled in writing at least 30 days before renewal.",
+        "vendor_name": "Harborline Cloud Services",
+        "data_privacy": "Data stored in EU data centres, encrypted at rest (AES-256) and in transit (TLS 1.2+). Daily backups retained for 14 days. Provider will notify customer of a confirmed personal data breach without undue delay.",
+        "payment_terms": "100% of the annual fee is payable upfront within 14 days of invoice.",
+        "cost_breakdown": "Storage capacity USD 79,200; standard support USD 12,000; migration services USD 7,200 (one-off, first year).",
+        "differentiators": null,
+        "company_overview": "Founded in 2014, 220 employees, supporting more than 400 business customers in North America and Europe.",
+        "delivery_timeline": "Migration will be completed within 10 weeks of signature, in three waves with weekly status reports.",
+        "warranty_liability": "Provider's total liability is capped at the fees paid in the preceding three months.",
+        "contact_information": "Taylor Brooks, Enterprise Account Manager, taylor.brooks@harborline.example, +1 415 555 0142"
+      },
+      "extracted_vendor_name": "Harborline Cloud Services",
+      "extracted_pricing": "USD 98,400 per year for 60 TB of managed storage. Capacity above 60 TB is charged at USD 140 per TB per month; data egress and API request charges are billed separately.",
+      "extracted_payment_terms": "100% of the annual fee is payable upfront within 14 days of invoice.",
+      "extracted_delivery": "Migration will be completed within 10 weeks of signature, in three waves with weekly status reports.",
+      "extracted_sla": "99.9% monthly availability, with service credits of 5% of the monthly fee for each 0.1% below target, capped at 15%. Support is available business hours (08:00–18:00 local time).",
+      "extracted_warranty": "Provider's total liability is capped at the fees paid in the preceding three months.",
+      "extracted_termination": "Initial term is three years. Renews automatically for successive one-year terms unless cancelled in writing at least 30 days before renewal.",
+      "extracted_data_privacy": "Data stored in EU data centres, encrypted at rest (AES-256) and in transit (TLS 1.2+). Daily backups retained for 14 days. Provider will notify customer of a confirmed personal data breach without undue delay.",
+      "compliance_flags": [
+        {
+          "severity": "high",
+          "flag_type": "payment_terms",
+          "clause_text": "100% of the annual fee is payable upfront within 14 days of invoice.",
+          "explanation": "Requiring 100% of the annual fee upfront creates significant financial risk for the buyer, as it provides no leverage for service performance and ties up capital."
+        },
+        {
+          "severity": "medium",
+          "flag_type": "fee_structure",
+          "clause_text": "Capacity above 60 TB is charged at USD 140 per TB per month; data egress and API request charges are billed separately as additional fees.",
+          "explanation": "The contract includes variable costs for egress and API requests that are not defined or capped, creating potential for unpredictable monthly expenses."
+        },
+        {
+          "severity": "medium",
+          "flag_type": "auto_renewal",
+          "clause_text": "This agreement renews automatically for successive one-year terms unless cancelled in writing at least 30 days before renewal.",
+          "explanation": "The 30-day opt-out window is relatively short for a large enterprise contract, increasing the risk of accidental renewal."
+        },
+        {
+          "severity": "high",
+          "flag_type": "price_escalation",
+          "clause_text": "Prices may increase at each renewal at the provider's discretion.",
+          "explanation": "The lack of a cap on price increases at renewal allows the vendor to unilaterally raise costs without limitation, which is a significant financial risk."
+        },
+        {
+          "severity": "high",
+          "flag_type": "liability_limitation",
+          "clause_text": "The provider's total liability under this agreement is capped at the fees paid in the preceding three months.",
+          "explanation": "A liability cap limited to only three months of fees is extremely low and likely insufficient to cover damages resulting from a major data loss or service failure."
+        },
+        {
+          "severity": "medium",
+          "flag_type": "unilateral_modification",
+          "clause_text": "Prices may increase at each renewal at the provider's discretion.",
+          "explanation": "The vendor reserves the right to change pricing unilaterally at renewal, which provides the buyer with no cost predictability."
+        }
+      ]
+    },
+    {
+      "rfp": "endpoint",
+      "vendor": "clearpath",
+      "file_name": "ClearPath-Endpoint-Security-Proposal.pdf",
+      "file_type": "pdf",
+      "file_size_bytes": 49024,
+      "extraction_status": "extracted",
+      "extraction_error": null,
+      "raw_extraction": {
+        "sla": "Console availability of 99.9%, with 4-hour response for critical incidents.",
+        "pricing": "Total annual price: USD 71,500 for 850 endpoints and 120 servers. 24/7 managed incident response service is available at an additional fee of USD 18,000 per year.",
+        "termination": "Two-year term. This agreement renews automatically for 12 months unless either party gives 60 days notice.",
+        "vendor_name": "ClearPath Security",
+        "data_privacy": "Telemetry is processed in the EU; ISO 27001 certified; breach notification within 48 hours.",
+        "payment_terms": "annually in advance, net 30 days",
+        "cost_breakdown": "USD 71,500 for 850 endpoints and 120 servers, including EDR and the central console. Additional fee of USD 18,000 per year for 24/7 managed incident response.",
+        "differentiators": null,
+        "company_overview": "ClearPath Security was established in 2011, has 310 employees and protects over 2,000 organisations.",
+        "delivery_timeline": "Rollout in 5 weeks, starting with a two-week pilot on 100 devices.",
+        "warranty_liability": null,
+        "contact_information": "Riley Chen, Solutions Director, riley.chen@clearpath.example"
+      },
+      "extracted_vendor_name": "ClearPath Security",
+      "extracted_pricing": "Total annual price: USD 71,500 for 850 endpoints and 120 servers. 24/7 managed incident response service is available at an additional fee of USD 18,000 per year.",
+      "extracted_payment_terms": "annually in advance, net 30 days",
+      "extracted_delivery": "Rollout in 5 weeks, starting with a two-week pilot on 100 devices.",
+      "extracted_sla": "Console availability of 99.9%, with 4-hour response for critical incidents.",
+      "extracted_warranty": null,
+      "extracted_termination": "Two-year term. This agreement renews automatically for 12 months unless either party gives 60 days notice.",
+      "extracted_data_privacy": "Telemetry is processed in the EU; ISO 27001 certified; breach notification within 48 hours.",
+      "compliance_flags": [
+        {
+          "severity": "medium",
+          "flag_type": "payment_terms",
+          "clause_text": "Payment terms: annually in advance, net 30 days.",
+          "explanation": "Requiring payment annually in advance creates financial risk for the buyer as it provides no leverage if the vendor fails to deliver services as promised throughout the year."
+        },
+        {
+          "severity": "medium",
+          "flag_type": "auto_renewal",
+          "clause_text": "This agreement renews automatically for 12 months unless either party gives 60 days notice.",
+          "explanation": "The contract includes an auto-renewal clause. While 60 days is a reasonable notice period, the buyer must track this date to avoid being locked into an additional 12-month term unintentionally."
+        },
+        {
+          "severity": "high",
+          "flag_type": "liability_limitation",
+          "clause_text": null,
+          "explanation": "The proposal does not contain any limitation of liability clause. This leaves the buyer exposed to unlimited potential damages in the event of a vendor failure or security breach."
+        },
+        {
+          "severity": "medium",
+          "flag_type": "ip_ownership",
+          "clause_text": null,
+          "explanation": "The proposal is silent regarding the ownership of any custom configurations or deliverables created during the deployment process. This ambiguity could lead to disputes over who owns the intellectual property of the security environment setup."
+        }
+      ]
+    }
+  ],
+  "criteria": [
+    {
+      "name": "Commercial Competitiveness",
+      "description": "Evaluation of the total cost of ownership over the three-year term, including base storage fees, migration costs, and support add-ons.",
+      "weight": 25,
+      "sort_order": 0,
+      "is_ai_suggested": true
+    },
+    {
+      "name": "Technical Capability and Scalability",
+      "description": "Assessment of the platform's ability to handle the initial 60 TB requirement and accommodate a 20% annual growth rate.",
+      "weight": 20,
+      "sort_order": 1,
+      "is_ai_suggested": true
+    },
+    {
+      "name": "Service Level Agreement and Support",
+      "description": "Evaluation of uptime guarantees, incident response times, and the availability of 24/7 support services.",
+      "weight": 20,
+      "sort_order": 2,
+      "is_ai_suggested": true
+    },
+    {
+      "name": "Migration and Implementation Plan",
+      "description": "Assessment of the vendor's ability to complete the migration from on-premise servers within the required 8-week timeframe.",
+      "weight": 15,
+      "sort_order": 3,
+      "is_ai_suggested": true
+    },
+    {
+      "name": "Data Security and Compliance",
+      "description": "Verification of encryption standards, EU data residency, backup retention policies, and adherence to regulatory requirements.",
+      "weight": 20,
+      "sort_order": 4,
+      "is_ai_suggested": true
+    }
+  ],
+  "scores": [
+    {
+      "vendor": "harborline",
+      "criterion": "Commercial Competitiveness",
+      "score": 6,
+      "reasoning": "The annual cost is USD 98,400, but this excludes variable costs for storage growth, data egress, and API requests. Furthermore, 24/7 support is not included in the base price and requires an additional USD 9,600 per year, which significantly increases the total cost of ownership."
+    },
+    {
+      "vendor": "harborline",
+      "criterion": "Technical Capability and Scalability",
+      "score": 8,
+      "reasoning": "The vendor is capable of handling the initial 60 TB requirement. While they provide a clear pricing structure for growth beyond 60 TB, the proposal does not explicitly detail the technical scalability limits of their platform."
+    },
+    {
+      "vendor": "harborline",
+      "criterion": "Service Level Agreement and Support",
+      "score": 3,
+      "reasoning": "The vendor only provides business-hour support by default, failing the 24/7 support requirement. While 24/7 support is available as an optional add-on, the base SLA does not meet the project's needs."
+    },
+    {
+      "vendor": "harborline",
+      "criterion": "Migration and Implementation Plan",
+      "score": 4,
+      "reasoning": "The vendor proposes a 10-week migration timeline, which fails to meet the mandatory 8-week requirement. The plan to use three waves with status reports is noted, but the duration is insufficient."
+    },
+    {
+      "vendor": "harborline",
+      "criterion": "Data Security and Compliance",
+      "score": 6,
+      "reasoning": "The vendor meets encryption and EU data residency requirements. However, the backup retention policy is only 14 days, which fails to meet the 30-day retention requirement."
+    },
+    {
+      "vendor": "summit",
+      "criterion": "Commercial Competitiveness",
+      "score": 9,
+      "reasoning": "The proposal offers a clear annual cost of USD 112,800 that includes migration, onboarding, and 24/7 support. The price increase cap of 3% provides good predictability for the three-year term."
+    },
+    {
+      "vendor": "summit",
+      "criterion": "Technical Capability and Scalability",
+      "score": 8,
+      "reasoning": "The vendor is an established enterprise provider with 1,200 customers, suggesting strong scalability. While the proposal confirms the initial 60 TB requirement, it does not explicitly detail how it will handle the 20% annual growth rate."
+    },
+    {
+      "vendor": "summit",
+      "criterion": "Service Level Agreement and Support",
+      "score": 10,
+      "reasoning": "The vendor exceeds the 99.9% availability requirement with a 99.99% guarantee. They also provide 24/7 support and a 1-hour response time for severity 1 incidents."
+    },
+    {
+      "vendor": "summit",
+      "criterion": "Migration and Implementation Plan",
+      "score": 10,
+      "reasoning": "The vendor commits to a 6-week migration timeline, which is well within the 8-week requirement. They provide a dedicated project manager and solution architect to ensure successful implementation."
+    },
+    {
+      "vendor": "summit",
+      "criterion": "Data Security and Compliance",
+      "score": 9,
+      "reasoning": "The vendor meets all requirements, including EU data residency in Frankfurt and Dublin, GDPR compliance, and daily backups with 35-day retention. While encryption is implied by ISO 27001 and SOC 2 certifications, it is not explicitly stated in the text."
+    }
+  ],
+  "report": {
+    "executiveSummary": "Northbridge Industries evaluated two vendors for a managed cloud storage platform to support 60 TB of engineering data. Summit Data Systems emerged as the superior candidate, achieving a weighted score of 9.15 compared to Harborline Cloud Services' 5.5. Summit Data Systems meets all technical and operational requirements, including a 6-week migration timeline, 99.99% availability, and robust support. Conversely, Harborline Cloud Services failed to meet the 8-week migration deadline, offers only business-hours support, and presents four high-severity compliance risks. Summit Data Systems provides a more reliable, compliant, and operationally aligned solution for the company's long-term storage needs.",
+    "recommendedVendor": "summit",
+    "rationale": "Summit Data Systems is recommended due to its high performance across all evaluation criteria and lack of high-severity compliance risks. It exceeds the project requirements for migration speed and support availability. Harborline Cloud Services was disqualified due to significant compliance concerns and an inability to meet the mandated 8-week migration schedule."
+  }
+}

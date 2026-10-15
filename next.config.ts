@@ -6,7 +6,11 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ['pdf-parse', 'mammoth', 'xlsx', 'puppeteer-core', '@sparticuz/chromium'],
   // Decision P10-2: the 500 page's "Contact support" address — NEXT_PUBLIC_SUPPORT_EMAIL, else the
   // (non-secret) email sender address; empty hides the link.
-  env: { NEXT_PUBLIC_SUPPORT_EMAIL: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || process.env.RESEND_FROM_EMAIL || '' },
+  // Decision P12-2: DEMO_MODE is also needed by the sign-in / sign-up pages.
+  env: {
+    NEXT_PUBLIC_SUPPORT_EMAIL: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || process.env.RESEND_FROM_EMAIL || '',
+    NEXT_PUBLIC_DEMO_MODE: process.env.DEMO_MODE === '1' ? '1' : '',
+  },
 }
 
 export default nextConfig

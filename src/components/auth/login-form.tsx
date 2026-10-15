@@ -13,14 +13,20 @@ import { SubmitButton } from '@/components/forms/submit-button'
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { getAppClaims, homePathFor } from '@/lib/auth/claims'
+import type { DemoLogin } from '@/lib/demo'
 import { loginSchema, type LoginFormValues } from '@/lib/schemas/auth'
 import { createClient } from '@/lib/supabase/client'
 
 const DISABLED_MESSAGE = 'Your account has been disabled. Contact your administrator.'
 
-type LoginFormProps = { redirectTo: string; reason: string | null }
+type LoginFormProps = {
+  redirectTo: string
+  reason: string | null
+  /** Decision P12-2: demo deployments list their shared logins. */
+  demo?: { password: string; logins: DemoLogin[] } | null
+}
 
-export function LoginForm({ redirectTo, reason }: LoginFormProps) {
+export function LoginForm({ redirectTo, reason, demo }: LoginFormProps) {
   const router = useRouter()
   const [formError, setFormError] = useState<string | null>(reason === 'disabled' ? DISABLED_MESSAGE : null)
   const announced = useRef(false)
@@ -91,6 +97,32 @@ export function LoginForm({ redirectTo, reason }: LoginFormProps) {
             Sign In
           </SubmitButton>
         </form>
+        {demo && (
+          <section aria-labelledby="demo-accounts" className="mt-8 border-t border-border pt-6" data-testid="demo-accounts">
+            <h2 id="demo-accounts" className="text-sm font-medium text-foreground">
+              Demo accounts
+            </h2>
+            <p className="mt-1 text-xs text-muted-foreground">This is a demonstration environment. Choose a role to fill in its sign-in details, then select Sign In.</p>
+            <ul className="mt-3 space-y-1.5">
+              {demo.logins.map((login) => (
+                <li key={login.email}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      form.setValue('email', login.email, { shouldValidate: false })
+                      form.setValue('password', demo.password, { shouldValidate: false })
+                      setFormError(null)
+                    }}
+                    className="flex w-full items-center justify-between gap-3 rounded border border-border px-3 py-2 text-left text-sm hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <span className="font-medium text-foreground">{login.label}</span>
+                    <span className="truncate text-xs text-muted-foreground">{login.email}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </CardContent>
     </Card>
   )

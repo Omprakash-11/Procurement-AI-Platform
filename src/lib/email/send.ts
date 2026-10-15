@@ -15,6 +15,11 @@ function usesLocalSupabase(): boolean {
 type SendEmailInput = { to: string; subject: string; react: ReactElement }
 
 export async function sendEmail({ to, subject, react }: SendEmailInput): Promise<void> {
+  // Decision P12-2: a demonstration deployment never sends mail (shared, fictional accounts).
+  if (process.env.DEMO_MODE === '1') {
+    console.warn(`[demo] email not sent: "${subject}" → ${to}`)
+    return
+  }
   const html = await render(react)
   const text = await render(react, { plainText: true })
   const from = process.env.RESEND_FROM_EMAIL ?? 'onboarding@resend.dev'

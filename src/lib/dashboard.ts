@@ -31,7 +31,7 @@ export async function loadPmDashboard(supabase: SupabaseClient<Database>): Promi
   const sparkFrom = subDays(today, DAYS - 1)
   const allSparkActions = Object.values(SPARK_ACTIONS).flat()
 
-  const [activeRfps, vendorsUnderEval, pendingApprovals, contractsExpiring, sparkRows, snapshotRows, renewalRows, activityRows, profiles] =
+  const [activeRfps, vendorsUnderEval, pendingApprovals, contractsExpiring, sparkRows, snapshotRows, renewalRows, activityRows, profiles, vendorAccounts] =
     await Promise.all([
       supabase.from('rfps').select('id', { count: 'exact', head: true }).eq('is_deleted', false).in('status', ACTIVE_RFP_STATUSES),
       supabase
@@ -58,11 +58,13 @@ export async function loadPmDashboard(supabase: SupabaseClient<Database>): Promi
         .order('end_date', { ascending: true }),
       supabase
         .from('activity_log')
-        .select('id, actor_id, entity_type, entity_id, description, metadata, created_at')
+        .select('id, actor_id, actor_type, entity_type, entity_id, description, metadata, created_at')
         .not('action', 'in', `(${INTERNAL_ACTIONS.join(',')})`)
         .order('created_at', { ascending: false })
         .limit(10),
       supabase.from('profiles').select('id, full_name'),
+      // Vendor actions (e.g. a submission) are logged with the vendor account as the actor.
+      supabase.from('vendor_accounts').select('id, company_name'),
     ])
 
   const byDay = (actions: readonly string[]) => {
@@ -92,7 +94,7 @@ export async function loadPmDashboard(supabase: SupabaseClient<Database>): Promi
     if (rfpId && !lastActivity.has(rfpId)) lastActivity.set(rfpId, e.created_at)
   }
 
-  const names = new Map((profiles.data ?? []).map((p) => [p.id, p.full_name]))
+  const names = new Map([...(profiles.data ?? []).map((p) => [p.id, p.full_name] as const), ...(vendorAccounts.data ?? []).map((v) => [v.id, v.company_name] as const)])
 
   return {
     stats: {

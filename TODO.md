@@ -90,6 +90,10 @@ Legend: `[ ]` todo · `[x]` done · **⛔ Gate** = decision needed before coding
 | 2026-10-15 | **P11-2** Test isolation: global setup runs `supabase db reset` once; every spec creates its own uniquely named data (API or service-role helper); 1 worker. |
 | 2026-10-15 | **P11-3** Beyond the Plan's 7 specs: `isolation.spec.ts` (vendor isolation, CLAUDE.md) and `requirements.spec.ts` (DH flow); extra page objects Dashboard, Requirements, Activity, VendorDetail, Report. |
 | 2026-10-15 | **P11-4** Keep the full 25-test suite; record the measured run time (3.6 min tests + ~1.3 min setup on this machine) instead of trimming coverage to meet the Plan's 3-minute target. |
+| 2026-10-15 | **P12-1** Demo organisation "Northbridge Industries" loaded by an idempotent script (`npm run demo:seed`, service role, local or production): one login per role, RFPs across the pipeline, a reported evaluation, a pending approval, contracts (one near renewal), requirements, notes, activity. AI results captured once from a real Gemini run and stored as a JSON fixture; neutral professional wording. |
+| 2026-10-15 | **P12-2** `DEMO_MODE=1` (off by default): demo accounts can't change password / email / organisation settings or send team invites; outgoing emails are logged, not sent; public signup closed with a notice; login page lists the demo logins. Everything else works normally. |
+| 2026-10-15 | **P12-3** `npm run demo:reset` wipes and reloads the demo organisation only (guarded by its slug); run before demos / recordings. Can be scheduled later if the Vercel plan allows another cron job. |
+| 2026-10-15 | **P12-4** Hosting: Supabase free project + Vercel Hobby on the *.vercel.app address; custom domain and verified Resend sender later, no code change needed (emails off via DEMO_MODE until then). |
 | 2026-10-14 | **CLAUDE.md over Tech Stack §8.2** Kanban optimistic updates live in the TanStack Query cache, not Zustand ("never put API data in Zustand"). |
 | 2026-10-14 | **#34** Repo already exists — no `git init`; scaffold in a temp dir and copy in; single commit at the end of the verified phase. |
 
@@ -436,12 +440,31 @@ Verify (2026-10-15):
 
 ## Phase 12 — Production deployment
 
-⛔ Gates: #16 (`db push --linked`), whether hosted project `gromqdafteemyvcguyrl` becomes prod or staging, custom domain + Resend domain, rotating keys shared during dev, Puppeteer on Vercel (#4).
+### 12a — Deployment preparation (done 2026-10-15)
 
-- [ ] Prod Supabase project; link; push migrations; register auth hook; verify buckets + pg_cron
-- [ ] Prod env vars; types from linked DB; production build
-- [ ] Vercel project, env vars, `vercel --prod`, custom domain, crons active
-- [ ] Resend production domain; send each template once
-- [ ] Smoke test the full flow on the live domain
+- [x] P12-1 demo organisation: `scripts/demo/` (accounts, content, captured AI results, `seed.mjs`); `npm run demo:seed` / `npm run demo:reset`; refuses a hosted Supabase without `--production`
+- [x] P12-2 `DEMO_MODE=1`: guards on password change, organisation settings, team invites and signup (403 `demo_restricted`); emails logged, not sent; demo-accounts panel on the login page; signup page closed
+- [x] Fixes found in the demo walkthrough: locked kanban cards no longer `aria-disabled`; signup page reads DEMO_MODE per request; key terms prefer the proposal over the price sheet; dashboard names vendor actors
+- [x] Demo walkthrough (DEMO_MODE, every role) — 14/14 checks
+- [x] `npx playwright test` — 25 passed (long approval tests given a 60 s budget); `npm run build` and `npm run lint` clean
+- [ ] Owner's local testing — pause until the owner confirms
+
+### 12b — Deploy (only on the owner's explicit go)
+
+⛔ Gates: #16 (`db push --linked`), whether hosted project `gromqdafteemyvcguyrl` becomes prod, rotating keys shared during dev, Puppeteer on Vercel (#4), rate limiting (#54).
+
+Owner (dashboards / accounts):
+- [ ] Supabase project: URL, anon key, service-role key, DB password (for `supabase link`)
+- [ ] Supabase Auth: register `custom_access_token_hook`; site URL + redirect URLs = the Vercel address; disable public email signup
+- [ ] Vercel account; import the repo; env vars from `.env.example` + `DEMO_MODE=1`, `NEXT_PUBLIC_APP_URL`, `CRON_SECRET`, `GEMINI_API_KEY`
+- [ ] Fresh Gemini key and new Supabase keys (keys used during development are rotated)
+
+Build:
+- [ ] `supabase link`; `supabase db push --linked`; verify buckets, RLS, auth hook
+- [ ] `npm run demo:seed -- --production` against the hosted project
+- [ ] Vercel deploy; crons active; PDF export works on Vercel
+- [ ] Smoke test every role on the live address; then the use-case docs (after the owner confirms)
+
+Later (no code change): custom domain, verified Resend sender, turn emails on by removing `DEMO_MODE` email logging.
 
 Verify: the 10 Plan Phase 12 checklist items. Commit.
