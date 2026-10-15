@@ -49,6 +49,8 @@ export function notificationHref(n: Pick<NotificationItem, 'entity_type' | 'enti
   switch (n.entity_type) {
     case 'rfp':
       return `/pipeline/rfp/${n.entity_id}`
+    case 'report': // entity_id is the RFP id — the DH's "evaluation ready" link
+      return `/pipeline/rfp/${n.entity_id}/report`
     case 'contract':
       return `/contracts/${n.entity_id}`
     case 'approval_request':

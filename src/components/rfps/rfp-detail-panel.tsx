@@ -1,11 +1,13 @@
 'use client'
 
 import { format } from 'date-fns'
-import { Archive, Pencil, UserPlus } from 'lucide-react'
+import { AlertCircle, Archive, FileBarChart, Loader2, Pencil, UserPlus } from 'lucide-react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
+import { CriteriaDialog } from '@/components/evaluation/criteria-dialog'
 import { ConfirmDialog } from '@/components/rfps/confirm-dialog'
 import { InviteVendorDialog } from '@/components/rfps/invite-vendor-dialog'
 import { RfpFormDialog } from '@/components/rfps/rfp-form-dialog'
@@ -13,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { fetchJson } from '@/lib/fetch-json'
+import { useGenerateReport } from '@/lib/queries/evaluation'
 import { formatBudget, type RfpDetail } from '@/lib/rfps'
 import { isoToDateInput } from '@/lib/schemas/rfp'
 import { RFP_STATUS_LABEL, RFP_STATUS_TONE } from '@/lib/status'
@@ -21,10 +24,12 @@ type RfpDetailPanelProps = { detail: RfpDetail; departments: string[] }
 
 const DESCRIPTION_PREVIEW = 280
 const INVITABLE = ['requirements_received', 'rfp_created', 'vendors_invited', 'submissions_in', 'under_evaluation']
+const EVALUATION_LOCKED = ['approval_pending', 'contracted', 'archived']
+const POLL_MS = 5_000
 
 // App Flow §4 RFP Detail — left panel: inline-editable title, status, department, budget,
-// deadline, collapsible description, actions. Start Evaluation / Generate Report / Submit for
-// Approval follow their App Flow visibility rules; their actions arrive in Phases 7–8.
+// deadline, collapsible description, actions. Start Evaluation (>= 1 submission) opens the
+// criteria modal; Generate Report appears once scoring is complete. Submit for Approval: Phase 8.
 export function RfpDetailPanel({ detail, departments }: RfpDetailPanelProps) {
   const router = useRouter()
   const { rfp, currency } = detail
@@ -34,8 +39,18 @@ export function RfpDetailPanel({ detail, departments }: RfpDetailPanelProps) {
   const [editOpen, setEditOpen] = useState(false)
   const [inviteOpen, setInviteOpen] = useState(false)
   const [archiveOpen, setArchiveOpen] = useState(false)
+  const [criteriaOpen, setCriteriaOpen] = useState(false)
   const archived = rfp.status === 'archived'
   const canInvite = INVITABLE.includes(rfp.status)
+  const evaluationLocked = EVALUATION_LOCKED.includes(rfp.status)
+  const scoring = detail.evaluationStatus === 'scoring_in_progress'
+
+  // Scoring runs in the background (Tech Stack §11.1): refresh until it completes.
+  useEffect(() => {
+    if (!scoring) return
+    const timer = setInterval(() => router.refresh(), POLL_MS)
+    return () => clearInterval(timer)
+  }, [scoring, router])
 
   const patch = (body: object) => fetchJson(`/api/rfps/${rfp.id}`, { method: 'PATCH', body: JSON.stringify(body) })
 
@@ -113,6 +128,15 @@ export function RfpDetailPanel({ detail, departments }: RfpDetailPanelProps) {
         )}
       </div>
 
+      {detail.evaluation?.reportGeneratedAt && (
+        <Button variant="outline" className="w-full" asChild>
+          <Link href={`/pipeline/rfp/${rfp.id}/report`}>
+            <FileBarChart aria-hidden="true" />
+            View Report
+          </Link>
+        </Button>
+      )}
+
       {!archived && (
         <div className="flex flex-col gap-2">
           <Button variant="outline" onClick={() => setEditOpen(true)}>
@@ -125,7 +149,12 @@ export function RfpDetailPanel({ detail, departments }: RfpDetailPanelProps) {
               Invite Vendors
             </Button>
           )}
-          <StartEvaluationButton submittedCount={detail.submittedCount} />
+          {!evaluationLocked && (
+            <StartEvaluationButton submittedCount={detail.submittedCount} scoring={scoring} onStart={() => setCriteriaOpen(true)} />
+          )}
+          {!evaluationLocked && (detail.evaluationStatus === 'scored' || detail.evaluationStatus === 'report_generated') && detail.evaluation && (
+            <GenerateReportButton rfpId={rfp.id} evaluationId={detail.evaluation.id} regenerate={Boolean(detail.evaluation.reportGeneratedAt)} />
+          )}
           <Button variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setArchiveOpen(true)}>
             <Archive aria-hidden="true" />
             Archive RFP
@@ -162,6 +191,16 @@ export function RfpDetailPanel({ detail, departments }: RfpDetailPanelProps) {
           router.refresh()
         }}
       />
+      {detail.evaluation && (
+        <CriteriaDialog
+          rfpId={rfp.id}
+          evaluationId={detail.evaluation.id}
+          existing={detail.evaluation.criteria}
+          open={criteriaOpen}
+          onOpenChange={setCriteriaOpen}
+          onStarted={() => router.refresh()}
+        />
+      )}
       <InviteVendorDialog rfpId={rfp.id} open={inviteOpen} onOpenChange={setInviteOpen} onInvited={() => router.refresh()} />
       <ConfirmDialog
         open={archiveOpen}
@@ -184,23 +223,74 @@ export function RfpDetailPanel({ detail, departments }: RfpDetailPanelProps) {
   )
 }
 
-// App Flow §4: visible once a vendor has submitted; otherwise disabled with a tooltip.
-// The evaluation itself (criteria modal + scoring) is built in Phase 7.
-function StartEvaluationButton({ submittedCount }: { submittedCount: number }) {
-  const ready = submittedCount > 0
+// App Flow §4: visible once a vendor has submitted; otherwise disabled with a tooltip. Opens the
+// criteria modal; while AI scoring runs it shows progress instead.
+function StartEvaluationButton({ submittedCount, scoring, onStart }: { submittedCount: number; scoring: boolean; onStart: () => void }) {
+  if (scoring) {
+    return (
+      <Button className="w-full" disabled aria-busy="true">
+        <Loader2 className="motion-safe:animate-spin" aria-hidden="true" />
+        Scoring in progress…
+      </Button>
+    )
+  }
+  if (submittedCount > 0) {
+    return (
+      <Button className="w-full" onClick={onStart}>
+        Start Evaluation
+      </Button>
+    )
+  }
   return (
     <TooltipProvider delayDuration={200}>
       <Tooltip>
         <TooltipTrigger asChild>
           {/* span wrapper: a disabled button doesn't fire the events the tooltip needs */}
-          <span tabIndex={ready ? -1 : 0} className="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <span tabIndex={0} className="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             <Button className="w-full" disabled aria-disabled="true">
               Start Evaluation
             </Button>
           </span>
         </TooltipTrigger>
-        <TooltipContent>{ready ? 'Evaluation becomes available in a later release step.' : 'Available once at least one vendor has submitted.'}</TooltipContent>
+        <TooltipContent>Available once at least one vendor has submitted.</TooltipContent>
       </Tooltip>
     </TooltipProvider>
+  )
+}
+
+// App Flow §4: "Generate Report" appears once scoring is complete. Synchronous AI call; a failure
+// is shown inline with Retry (CLAUDE.md AI pipeline).
+function GenerateReportButton({ rfpId, evaluationId, regenerate }: { rfpId: string; evaluationId: string; regenerate: boolean }) {
+  const router = useRouter()
+  const generate = useGenerateReport()
+  const [error, setError] = useState<string | null>(null)
+
+  const run = async () => {
+    setError(null)
+    try {
+      await generate.mutateAsync(evaluationId)
+      toast.success('Report generated', { duration: 4000 })
+      router.push(`/pipeline/rfp/${rfpId}/report`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'The report could not be generated.')
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <Button className="w-full" variant={regenerate ? 'outline' : 'default'} disabled={generate.isPending} aria-busy={generate.isPending || undefined} onClick={run}>
+        {generate.isPending && <Loader2 className="motion-safe:animate-spin" aria-hidden="true" />}
+        {generate.isPending ? 'Generating report…' : regenerate ? 'Regenerate Report' : 'Generate Report'}
+      </Button>
+      {error && (
+        <p role="alert" className="flex items-center gap-1.5 text-xs text-destructive">
+          <AlertCircle className="size-3 shrink-0" aria-hidden="true" />
+          {error}
+          <Button variant="ghost" size="sm" className="h-auto px-1 py-0 text-xs" onClick={run}>
+            Retry
+          </Button>
+        </p>
+      )}
+    </div>
   )
 }

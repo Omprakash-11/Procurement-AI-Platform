@@ -200,6 +200,11 @@ These were found while reading the docs. **Each one is a decision point** — wh
 - **#20** → `popover` / `popover-foreground` mapped in `tailwind.config.ts`.
 - **New: Next.js version** → Next 15.5.27 + React 19.2.8, because every Next 14.2.x release has open critical/high advisories.
 
+**Resolved (2026-10-15, Phase 7)** — see P7-1 … P7-8 in `TODO.md`:
+- **#1, #2** → Gemini confirmed; SDK `@google/genai` 2.29.1; model chain `gemini-3.8-flash` → `gemini-3.1-flash-lite` (`MODEL_CHAIN` in `src/lib/gemini/client.ts`, retries on 429/5xx). Billing on the AI Studio project is still to be enabled; until then calls fall through to flash-lite.
+- **#4** → `@vercel/functions` 3.10.1 `waitUntil()`; processing routes `maxDuration` 300; PDF via `puppeteer-core` (+ `@sparticuz/chromium` on Vercel, local Edge/Chrome).
+- **#15 (part)** → `vendor_notes` and `report_share_links` tables (migration 0032). DH comments, requirement attachments and escalated-flag ↔ approval linkage remain open for Phase 8.
+
 **AI and dependencies**
 1. PRD §6 says Anthropic Claude API; Tech Stack, Schema, and Plan say Gemini. Treat Gemini as current, but confirm.
 2. `gemini-1.5-pro-latest` / `gemini-1.5-flash-latest` were retired by Google in 2025 (requests return 404), and `@google/generative-ai` has been superseded by `@google/genai`. Model and SDK choice must be confirmed before Phase 7.

@@ -1,18 +1,22 @@
+import { waitUntil } from '@vercel/functions'
 import { NextResponse } from 'next/server'
 
 import VendorSubmittedEmail from '@/emails/vendor-submitted'
 import { logActivity } from '@/lib/activity'
 import { apiError, appUrl } from '@/lib/api'
 import { sendEmail } from '@/lib/email/send'
+import { processSubmission } from '@/lib/processing/documents'
 import { createAdminClient } from '@/lib/supabase/server'
 import { requireVendor } from '@/lib/vendor/portal'
 import { loadOwnedSubmission } from '@/lib/vendor/submissions'
+
+export const maxDuration = 300 // decision P7-2: document processing runs after the response
 
 type Params = { params: Promise<{ id: string }> }
 
 // POST /api/submissions/[id]/submit — Backend Schema §8.3 (vendor): lock the submission.
 // Needs ≥ 1 document and an open RFP (P6-3). Then (P6-6): entry → Submitted, first submission
-// moves the RFP to Submissions In, PM gets an in-app notification + email.
+// moves the RFP to Submissions In, PM gets an in-app notification + email; processing starts.
 export async function POST(_request: Request, { params }: Params) {
   const auth = await requireVendor()
   if (!auth.ok) return auth.response
@@ -34,6 +38,10 @@ export async function POST(_request: Request, { params }: Params) {
     .eq('status', 'in_progress')
     .select('id')
   if (!locked?.length) return apiError(409, 'already_submitted', 'Your proposal has already been submitted.')
+
+  // Decision P7-4: the submitted documents are processed now (extraction → compliance), in
+  // the background (P7-2) — the vendor's response doesn't wait for the AI.
+  waitUntil(processSubmission(id))
 
   await admin.from('rfp_vendor_entries').update({ status: 'submitted' }).eq('id', rfp.entryId).eq('status', 'invited')
 

@@ -64,6 +64,16 @@ Legend: `[ ]` todo · `[x]` done · **⛔ Gate** = decision needed before coding
 | 2026-10-14 | **P6-5** Expired-invite page shows the inviting PM's email as the contact. |
 | 2026-10-14 | **P6-6** On submit: PM in-app notification + new `vendor-submitted.tsx` email; entry → Submitted; first submission → RFP "Submissions In". |
 | 2026-10-14 | **Defaults (P6)** Vendor status refresh by 30 s polling; vendor-facing labels: internal Approved → Shortlisted, removed → Not Selected; vendor data only via server routes with whitelisted fields (P2-4). |
+| 2026-10-14 | **P7-1 (#2)** `@google/genai` 2.29.1 (replaces `@google/generative-ai`); `gemini-2.5-pro` for extraction / compliance / scoring / report, `gemini-2.5-flash` for criteria suggestion and as fallback; SDK JSON mode + response schema, then Zod. |
+| 2026-10-15 | **P7-1 revised (#2)** Live test: 2.5 Pro/Flash return 404 (retired for new keys), 3.x Flash 503 / Pro previews no quota on the free tier. Option A: enable billing on the AI Studio project (pending — user to confirm); model chain `gemini-3.8-flash` → `gemini-3.1-flash-lite` (`MODEL_CHAIN` in `src/lib/gemini/client.ts`), 3 attempts per model with backoff on 429/5xx, 240 s total budget. Until billing is on, calls fall through to flash-lite. |
+| 2026-10-14 | **P7-2 (#4)** `@vercel/functions` 3.10.1 `waitUntil()` runs the pipeline in-process; `/api/process/document/[id]` is the PM Retry route; processing routes `maxDuration` 300 s; client polls every 5 s. |
+| 2026-10-14 | **P7-3 (#36)** SheetJS `xlsx` 0.20.3 from cdn.sheetjs.com (pinned tarball + lockfile integrity) instead of npm 0.18.5. |
+| 2026-10-14 | **P7-4** Documents are processed (extraction → compliance) when the vendor submits, not on upload; internal users see a vendor's documents only after submission (RLS + storage policy change). Compliance route kept for re-runs. |
+| 2026-10-14 | **P7-5 (#15)** New `vendor_notes` table: PM-only, insert + read (append-only), per vendor per RFP. |
+| 2026-10-14 | **P7-6 (#15)** New `report_share_links` table + public read-only `/share/report/[token]` (7 days, hashed token, revocable, noindex). |
+| 2026-10-14 | **P7-7 (#29)** Flagged clauses shown as highlighted excerpts in the Compliance tab — no document viewer. |
+| 2026-10-14 | **P7-8** PDF export: `puppeteer-core` everywhere — `@sparticuz/chromium` on Vercel, the installed Microsoft Edge locally. |
+| 2026-10-14 | **Defaults (P7)** Start Evaluation → submitted vendors Under Review + RFP Under Evaluation; scoring async + "Scoring complete" notification; weighted total = Σ(score × weight%) on 0–10; Generate Report notifies the requirement's DH (in-app + new `evaluation-ready.tsx` email); failures inline with Retry; scanned-PDF message per Tech Stack §6; scoring templates page built here (P4-8). |
 | 2026-10-14 | **CLAUDE.md over Tech Stack §8.2** Kanban optimistic updates live in the TanStack Query cache, not Zustand ("never put API data in Zustand"). |
 | 2026-10-14 | **#34** Repo already exists — no `git init`; scaffold in a temp dir and copy in; single commit at the end of the verified phase. |
 
@@ -289,29 +299,34 @@ Verify (2026-10-14 — headless Chromium against the production build):
 
 ## Phase 7 — AI processing
 
-⛔ Gates: #2 (Gemini model + SDK — 1.5 models unavailable on this key; 2.5 Pro/Flash available), #4, #15 (vendor notes table, share links), #29, local `puppeteer` vs `puppeteer-core` (not in package.json), when compliance runs (on upload vs on evaluation).
+⛔ Gates: #2 (resolved: P7-1 revised, 2026-10-15), #4, #15 (vendor notes table, share links), #29, local `puppeteer` vs `puppeteer-core` (not in package.json), when compliance runs (on upload vs on evaluation).
 
-- [ ] `src/lib/gemini/client.ts`, `prompts.ts` (extraction, criteria, scoring, compliance, report)
-- [ ] `/api/process/document/[id]`: download, extract text, scanned-doc error, Gemini, Zod-validate, store JSONB + 8 columns, status
-- [ ] Fire processing non-blocking from upload route
-- [ ] Vendor detail tabs: Documents (poll 5s, retry), Scores (override), Compliance (ack/escalate), Notes
-- [ ] `/api/process/suggest-criteria/[rfpId]`; evaluation criteria modal (running total = 100)
-- [ ] `PUT /api/evaluations/[rfpId]/criteria`; `/api/process/score/[evaluationId]`
-- [ ] `/api/process/compliance/[submissionId]`; `/api/process/report/[evaluationId]`
-- [ ] Comparison report page: summary, scorecard bar chart, risk table + donut, key terms, recommendation, export, share link
-- [ ] `/api/reports/[rfpId]/export` (Puppeteer PDF)
-- [ ] Sparkles prefix on every AI output
+- [x] `src/lib/gemini/client.ts` (model chain + retries, P7-1 revised), `prompts.ts` (extraction, criteria, scoring, compliance, report — vendor text fenced as untrusted data), Zod schemas `src/lib/schemas/ai.ts`
+- [x] Pipeline `src/lib/processing/`: download → text (pdf-parse / mammoth / SheetJS) → scanned-doc error → Gemini → Zod → raw JSONB + 8 columns → compliance flags → `extracted` / `failed` (+ PM notification, activity)
+- [x] Fired with `waitUntil()` from the submit route (P7-4, not on upload); `/api/process/document/[id]` = PM Retry (failed, or stuck > 6 min)
+- [x] Vendor detail tabs: Documents (5 s polling, extracted-data expander, failed banner + Retry, signed-URL download), Scores (override inline, colour-coded total, per-vendor Retry), Compliance (counts, severity filter, clause excerpts, Acknowledge / Escalate), Notes (append-only)
+- [x] `/api/process/suggest-criteria/[rfpId]`; full-screen criteria modal (AI suggestions with Sparkles, templates, add / remove, running total = 100)
+- [x] `PUT /api/evaluations/[rfpId]/criteria`; `/api/process/score/[evaluationId]` (async, run++, per-vendor retry); `PATCH /api/scores/[scoreId]/override`; `GET /api/evaluations/[rfpId]`
+- [x] `/api/process/compliance/[submissionId]` (re-run; keeps acknowledged / escalated); `/api/process/report/[evaluationId]` (+ DH notification + `evaluation-ready.tsx` email)
+- [x] Comparison report page: summary, scorecard bar chart + table, risk table + donut, key terms, recommendation, Export PDF, Copy Share Link; public `/share/report/[token]`
+- [x] `/api/reports/[rfpId]` (GET), `/export` (puppeteer-core PDF), `/share` (POST create / DELETE revoke)
+- [x] Scoring templates page + `/api/scoring-templates` CRUD (P4-8)
+- [x] Sparkles prefix on every AI output
+- Routes added beyond Backend Schema §8 (for App Flow §4 actions / P7-5 / P7-6 / P4-8): `/api/rfps/[id]/vendors/[entryId]/documents`, `…/notes`, `/api/compliance-flags/[id]`, `/api/submissions/[id]/documents/[docId]/download`, `/api/reports/[rfpId]/share`, `/api/scoring-templates` (+ `[id]`)
+- Chart colour tokens `--chart-good / --chart-mid / --chart-risk-high / --chart-risk-low` added to `globals.css` (Content Guidelines §9 colours, read via getComputedStyle)
+- Deferred: "Submit for Approval" on the report (Phase 8); escalated flag ↔ approval link (Phase 8, #15); per-vendor activity under the tabs (Phase 9 activity feed)
 
 Verify:
-- [ ] Upload → queued → processing → extracted
-- [ ] Extracted fields shown; scanned PDF fails with exact message
-- [ ] Suggested criteria load; ≠ 100% blocks confirm
-- [ ] Scores + reasoning shown; override stores both
-- [ ] Re-score increments `scoring_run_count`
-- [ ] Compliance flags with correct severities
-- [ ] Report renders all sections + charts; PDF downloads
-- [ ] All AI content has Sparkles
-- [ ] Commit
+- [x] Upload → queued → processing → extracted (processing starts on submit, P7-4; drafts invisible to internal users)
+- [x] Extracted fields shown (AI Extracted expander); image-only PDF fails with the exact Tech Stack §6 message; Retry re-runs
+- [x] Suggested criteria load (5–10, Sparkles, total 100); ≠ 100% blocks confirm (UI + API 400)
+- [x] Scores + reasoning shown; override stores both (AI 3.50 / override 9.50 + justification + who/when)
+- [x] Re-score increments `scoring_run_count` (run 1 rows kept)
+- [x] Compliance flags with correct severities (upfront payment, auto-renewal, liability, escalation, unilateral change, breach notice → high); Acknowledge / Escalate
+- [x] Report renders all sections + charts; PDF downloads (2 pages, ~100 KB); share link works, expires, revokes; DH read-only
+- [x] All AI content has Sparkles
+- [x] Extra: prompt-injection line in a vendor PDF ignored; vendor REST / API isolation on every new table and route; DH notification + email; extraction-failed + scoring-complete notifications — 103/103 against live Gemini (flash-lite fallback). Regression: P6 56/56 (two expectations updated for P7-4), P5 64/64, P4 53/53, P3 73/73
+- [x] Commit
 
 ## Phase 8 — Dept Head, Finance & approvals
 
@@ -330,7 +345,7 @@ Verify:
 - [ ] Approve creates contract + vendor `contracted`
 - [ ] Reject emails PM; recall sets `recalled`
 - [ ] Second pending approval per RFP blocked
-- [ ] Commit
+- [x] Commit
 
 ## Phase 9 — Contracts, notifications & activity
 
@@ -351,7 +366,7 @@ Verify:
 - [ ] Bell shows real counts; clicks navigate correctly
 - [ ] Activity log shows events with before/after
 - [ ] All email templates render
-- [ ] Commit
+- [x] Commit
 
 ## Phase 10 — Error handling & polish
 

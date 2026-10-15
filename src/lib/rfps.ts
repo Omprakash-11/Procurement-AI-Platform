@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
+import { loadEvaluation, type CriterionView } from '@/lib/evaluation'
 import type { Database, Enums } from '@/types'
 
 export type RfpVendorRow = {
@@ -14,7 +15,7 @@ export type RfpVendorRow = {
   removed: boolean
   documentCount: number
   flagCount: number
-  /** Weighted total once scoring exists (Phase 7). */
+  /** Weighted total (0–10) from the current scoring run, once every criterion is scored. */
   score: number | null
 }
 
@@ -35,26 +36,30 @@ export type RfpDetail = {
   vendors: RfpVendorRow[]
   submittedCount: number
   evaluationStatus: Enums<'evaluation_status'> | null
+  evaluation: { id: string; criteria: CriterionView[]; reportGeneratedAt: string | null; updatedAt: string } | null
 }
 
 // Reads with the caller's client, so RLS (can_read_rfp) decides what is visible.
 export async function loadRfpDetail(supabase: SupabaseClient<Database>, id: string): Promise<RfpDetail | null> {
   const { data: rfp } = await supabase
     .from('rfps')
-    .select('id, org_id, title, description, department, budget_min, budget_max, submission_deadline, status, requirement_id, created_at, organisations(currency), evaluations(status)')
+    .select('id, org_id, title, description, department, budget_min, budget_max, submission_deadline, status, requirement_id, created_at, organisations(currency), evaluations(status, updated_at)')
     .eq('id', id)
     .eq('is_deleted', false)
     .maybeSingle()
   if (!rfp) return null
 
-  const [{ data: entries }, { data: submissions }] = await Promise.all([
+  const [{ data: entries }, { data: submissions }, evaluation] = await Promise.all([
     supabase
       .from('rfp_vendor_entries')
       .select('id, status, is_shortlisted, vendor_account_id, vendor_accounts(company_name, contact_name, email)')
       .eq('rfp_id', id)
       .order('created_at', { ascending: true }),
     supabase.from('submissions').select('vendor_account_id, status, documents(id, compliance_flags(count))').eq('rfp_id', id),
+    loadEvaluation(supabase, id),
   ])
+  const totals = new Map((evaluation?.vendors ?? []).map((v) => [v.vendorAccountId, v.total]))
+
 
   const byVendor = new Map<string, { docs: number; flags: number; submitted: boolean }>()
   for (const s of submissions ?? []) {
@@ -78,7 +83,7 @@ export async function loadRfpDetail(supabase: SupabaseClient<Database>, id: stri
     removed: e.status === 'not_selected' && !byVendor.get(e.vendor_account_id)?.submitted,
     documentCount: byVendor.get(e.vendor_account_id)?.docs ?? 0,
     flagCount: byVendor.get(e.vendor_account_id)?.flags ?? 0,
-    score: null,
+    score: totals.get(e.vendor_account_id) ?? null,
   }))
 
   return {
@@ -98,6 +103,9 @@ export async function loadRfpDetail(supabase: SupabaseClient<Database>, id: stri
     vendors,
     submittedCount: [...byVendor.values()].filter((s) => s.submitted).length,
     evaluationStatus: rfp.evaluations?.status ?? null,
+    evaluation: evaluation
+      ? { id: evaluation.id, criteria: evaluation.criteria, reportGeneratedAt: evaluation.reportGeneratedAt, updatedAt: rfp.evaluations?.updated_at ?? '' }
+      : null,
   }
 }
 

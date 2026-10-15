@@ -743,6 +743,62 @@ export type Database = {
           },
         ]
       }
+      report_share_links: {
+        Row: {
+          created_at: string
+          created_by: string
+          expires_at: string
+          id: string
+          org_id: string
+          revoked_at: string | null
+          rfp_id: string
+          token_hash: string
+        }
+        ComputedFields: never
+        Insert: {
+          created_at?: string
+          created_by: string
+          expires_at: string
+          id?: string
+          org_id: string
+          revoked_at?: string | null
+          rfp_id: string
+          token_hash: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          id?: string
+          org_id?: string
+          revoked_at?: string | null
+          rfp_id?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'report_share_links_created_by_fkey'
+            columns: ['created_by']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'report_share_links_org_id_fkey'
+            columns: ['org_id']
+            isOneToOne: false
+            referencedRelation: 'organisations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'report_share_links_rfp_id_fkey'
+            columns: ['rfp_id']
+            isOneToOne: false
+            referencedRelation: 'rfps'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       requirements: {
         Row: {
           budget_estimate: number | null
@@ -1187,6 +1243,56 @@ export type Database = {
             columns: ['vendor_account_id']
             isOneToOne: false
             referencedRelation: 'vendor_accounts'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      vendor_notes: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          org_id: string
+          rfp_vendor_entry_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          org_id: string
+          rfp_vendor_entry_id: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          org_id?: string
+          rfp_vendor_entry_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'vendor_notes_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'vendor_notes_org_id_fkey'
+            columns: ['org_id']
+            isOneToOne: false
+            referencedRelation: 'organisations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'vendor_notes_rfp_vendor_entry_id_fkey'
+            columns: ['rfp_vendor_entry_id']
+            isOneToOne: false
+            referencedRelation: 'rfp_vendor_entries'
             referencedColumns: ['id']
           },
         ]

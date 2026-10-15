@@ -1,7 +1,8 @@
 import type { AppClaims, UserRole } from '@/types'
 
 // App Flow §1 site map. Paths that never require a session.
-const PUBLIC_PREFIXES = ['/login', '/signup', '/reset-password', '/accept-invite', '/auth/confirm', '/vendor/invite']
+// '/share' = read-only report links (decision P7-6) — the token is the credential.
+const PUBLIC_PREFIXES = ['/login', '/signup', '/reset-password', '/accept-invite', '/auth/confirm', '/vendor/invite', '/share']
 
 // Signed-in users are sent home from these.
 const AUTH_ONLY_PAGES = ['/login', '/signup']
