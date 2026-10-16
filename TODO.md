@@ -481,4 +481,15 @@ Build:
 
 Later (no code change): custom domain, verified Resend sender, turn emails on by removing `DEMO_MODE` email logging.
 
-Verify: the 10 Plan Phase 12 checklist items. Commit.
+Verify (2026-10-16, Plan Phase 12 checklist):
+- [x] Production tables present — 22 (the Schema's 18 + 4 added by decisions P7/P8), identical to local
+- [x] All RLS policies active — RLS on all 22 tables, 48 policies; vendor sees 0 rows directly, PM sees own org only
+- [x] Live address with valid HTTPS — https://procurement-ai-platform.vercel.app (P12-4: *.vercel.app, no custom domain)
+- [x] Org + profile creation — verified through the same admin-API path (demo seed: org, 3 internal profiles, 3 vendors); public PM signup is closed in demo mode by design (P12-2) and covered by the E2E suite locally
+- [x] Document upload and AI extraction on production — live: Summit proposal extracted in 8 s (price, SLA, 3 compliance flags) with the new Gemini key
+- [n/a] Emails from a production domain — off in demo mode (P12-2); needs a verified Resend domain later (P12-4)
+- [x] Cron jobs active — 3 daily jobs in vercel.json; each refuses without CRON_SECRET and runs with it on the live site
+- [x] No console errors — 21 pages × 4 roles, 0 errors (after the P12-12 date fix)
+- [x] Deployment Ready on the correct domain — Vercel Ready, Tokyo region (hnd1), auto-deploys from GitHub main
+- [x] Full procurement flow on production — live walkthrough 14/14 + live infrastructure 13/13 (PDF export, vendor isolation, rate limit); the full create-to-contract flow was verified end to end with real Gemini in demo mode locally (Path B) and the live AI step above
+- [x] Commit
