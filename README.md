@@ -4,6 +4,23 @@ ProcureMaster is a production-grade, full-stack AI procurement platform for smal
 
 The platform is complete in its own right: multi-tenant organisations, role-based access, row-level security, an AI document pipeline, approval workflow, scheduled jobs, email notifications, PDF reports and an end-to-end test suite. An optional **demonstration mode** sits on top of it, so the platform can be explored with sample data from each user's point of view: live at **[procurement-ai-platform.vercel.app](https://procurement-ai-platform.vercel.app)**. See [Demonstration mode](#demonstration-mode-optional).
 
+## See it in action
+
+**Live demonstration:** **[procurement-ai-platform.vercel.app](https://procurement-ai-platform.vercel.app)**. Click any role on the sign-in page to explore with sample data, no sign-up needed. The [demo walkthrough](Docs/case-study/demo-walkthrough.md) takes you through a full purchase, step by step.
+
+| | |
+| --- | --- |
+| ![Sign-in page with product highlights and one-click demo accounts](Docs/screenshots/01-sign-in.png) | ![Procurement Manager dashboard with active RFPs, pipeline snapshot and renewal alerts](Docs/screenshots/02-dashboard.png) |
+| **Sign-in:** one-click demo accounts for every role | **Dashboard:** active RFPs, pending approvals, contracts nearing renewal |
+| ![AI comparison report with executive summary and vendor scorecard](Docs/screenshots/04-ai-report.png) | ![AI compliance flags on a vendor proposal, with severity and source clause](Docs/screenshots/05-compliance-flags.png) |
+| **AI comparison report:** executive summary, weighted scores, advisory recommendation | **AI compliance flags:** risky clauses with severity and the source text |
+
+![Pipeline board showing every RFP by stage, from requirement to contract](Docs/screenshots/03-pipeline.png)
+**Pipeline:** every purchase by stage, from the department's requirement to the signed contract.
+
+![Finance approval screen with the AI recommendation, department recommendation and the approve or reject decision](Docs/screenshots/06-finance-approval.png)
+**Finance approval:** the AI recommendation and the department's view on one screen, then approve or reject with a reason.
+
 ## Documentation
 
 - [Customer use case](Docs/case-study/customer-use-case.md): the business problem, the customer's requirements, and how ProcureMaster and its AI solve them

@@ -1,12 +1,12 @@
 'use client'
 
 import type { ColumnDef } from '@tanstack/react-table'
-import { format } from 'date-fns'
 import { AlertCircle, ChevronDown, ChevronRight, Download, FileSpreadsheet, FileText, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { DataTable } from '@/components/data-table/data-table'
+import { LocalDate } from '@/components/dates/local-date'
 import { AiExtractedLabel } from '@/components/evaluation/ai-marker'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/status-badge'
@@ -62,7 +62,7 @@ export function DocumentsTab({ rfpId, entryId, initialData }: DocumentsTabProps)
       },
     },
     { accessorKey: 'fileSizeBytes', header: 'Size', cell: ({ row }) => formatSize(row.original.fileSizeBytes) },
-    { accessorKey: 'uploadedAt', header: 'Uploaded', cell: ({ row }) => format(new Date(row.original.uploadedAt), 'd MMM yyyy') },
+    { accessorKey: 'uploadedAt', header: 'Uploaded', cell: ({ row }) => <LocalDate value={row.original.uploadedAt} /> },
     {
       accessorKey: 'status',
       header: 'Status',

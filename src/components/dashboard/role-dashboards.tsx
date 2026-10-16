@@ -1,13 +1,13 @@
 'use client'
 
 import type { ColumnDef } from '@tanstack/react-table'
-import { format, formatDistanceToNow } from 'date-fns'
 import { CheckCircle2, CheckSquare, ClipboardList, Clock, FileBarChart, XCircle } from 'lucide-react'
 import Link from 'next/link'
 
 import { ApprovalsTable } from '@/components/approvals/approvals-table'
 import { StatCard } from '@/components/dashboard/stat-card'
 import { DataTable } from '@/components/data-table/data-table'
+import { LocalDate, RelativeTime } from '@/components/dates/local-date'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { REQUIREMENT_STATUS_LABEL, REQUIREMENT_STATUS_TONE } from '@/lib/requirements'
@@ -24,7 +24,7 @@ const requirementColumns: ColumnDef<DhRequirement, unknown>[] = [
     ),
   },
   { accessorKey: 'status', header: 'Status', cell: ({ row }) => <StatusBadge tone={REQUIREMENT_STATUS_TONE[row.original.status]}>{REQUIREMENT_STATUS_LABEL[row.original.status]}</StatusBadge> },
-  { accessorKey: 'updatedAt', header: 'Last Updated', cell: ({ row }) => formatDistanceToNow(new Date(row.original.updatedAt), { addSuffix: true }) },
+  { accessorKey: 'updatedAt', header: 'Last Updated', cell: ({ row }) => <RelativeTime value={row.original.updatedAt} /> },
 ]
 
 type ReadyRow = DhDashboardData['readyForReview'][number]
@@ -39,7 +39,7 @@ const readyColumns: ColumnDef<ReadyRow, unknown>[] = [
     ),
   },
   { accessorKey: 'requirementTitle', header: 'Your Requirement' },
-  { accessorKey: 'generatedAt', header: 'Report Ready', cell: ({ row }) => format(new Date(row.original.generatedAt), 'd MMM yyyy') },
+  { accessorKey: 'generatedAt', header: 'Report Ready', cell: ({ row }) => <LocalDate value={row.original.generatedAt} /> },
 ]
 
 // App Flow §5 Dept Head Dashboard: My Open Requirements, Awaiting My Review, Completed This

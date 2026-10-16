@@ -1,11 +1,11 @@
 'use client'
 
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { format, formatDistanceToNow } from 'date-fns'
 import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 
+import { RelativeTime } from '@/components/dates/local-date'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -192,9 +192,7 @@ export function ActivityFeed({ scope, filters = false, label }: ActivityFeedProp
                     </dl>
                   )}
                 </div>
-                <time dateTime={a.createdAt} title={format(new Date(a.createdAt), 'd MMM yyyy, HH:mm:ss')} className="shrink-0 text-xs text-muted-foreground">
-                  {formatDistanceToNow(new Date(a.createdAt), { addSuffix: true })}
-                </time>
+                <RelativeTime value={a.createdAt} titlePattern="d MMM yyyy, HH:mm:ss" className="shrink-0 text-xs text-muted-foreground" />
               </div>
             </li>
           )

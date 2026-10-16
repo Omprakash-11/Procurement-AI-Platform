@@ -1,6 +1,5 @@
 'use client'
 
-import { format } from 'date-fns'
 import { AlertCircle, Archive, FileBarChart, Loader2, Pencil, UserPlus } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -8,6 +7,7 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { SubmitForApproval, type ApprovalOption, type PendingApproval } from '@/components/approvals/submit-for-approval'
+import { LocalDate } from '@/components/dates/local-date'
 import { CriteriaDialog } from '@/components/evaluation/criteria-dialog'
 import { ConfirmDialog } from '@/components/rfps/confirm-dialog'
 import { InviteVendorDialog } from '@/components/rfps/invite-vendor-dialog'
@@ -120,7 +120,7 @@ export function RfpDetailPanel({ detail, departments, approval }: RfpDetailPanel
         <dt className="text-muted-foreground">Budget</dt>
         <dd className="text-foreground">{formatBudget(rfp.budgetMin, rfp.budgetMax, currency)}</dd>
         <dt className="text-muted-foreground">Submission deadline</dt>
-        <dd className="text-foreground">{rfp.submissionDeadline ? format(new Date(rfp.submissionDeadline), 'd MMM yyyy') : '—'}</dd>
+        <dd className="text-foreground">{rfp.submissionDeadline ? <LocalDate value={rfp.submissionDeadline} /> : '—'}</dd>
       </dl>
 
       <div>

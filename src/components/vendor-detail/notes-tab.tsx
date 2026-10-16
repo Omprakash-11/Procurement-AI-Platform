@@ -1,10 +1,10 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { format, formatDistanceToNow } from 'date-fns'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
+import { RelativeTime } from '@/components/dates/local-date'
 import { FormField, fieldA11y } from '@/components/forms/form-field'
 import { SubmitButton } from '@/components/forms/submit-button'
 import { Textarea } from '@/components/ui/textarea'
@@ -53,9 +53,7 @@ export function NotesTab({ rfpId, entryId, initialNotes, locked }: NotesTabProps
           <li key={n.id} className="rounded border border-border bg-card p-4 shadow-sm">
             <div className="mb-1.5 flex items-center gap-2 text-xs text-muted-foreground">
               <span className="font-medium text-foreground">{n.authorName}</span>
-              <time dateTime={n.createdAt} title={format(new Date(n.createdAt), 'd MMM yyyy, HH:mm')}>
-                {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
-              </time>
+              <RelativeTime value={n.createdAt} />
             </div>
             <p className="whitespace-pre-line text-sm text-foreground">{n.body}</p>
           </li>

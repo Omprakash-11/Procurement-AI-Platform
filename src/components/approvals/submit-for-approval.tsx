@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
+import { formatUtc } from '@/components/dates/local-date'
 import { FormField } from '@/components/forms/form-field'
 import { SubmitButton } from '@/components/forms/submit-button'
 import { ConfirmDialog } from '@/components/rfps/confirm-dialog'
@@ -31,7 +32,6 @@ type SubmitForApprovalProps = {
   fullWidth?: boolean
 }
 
-const SLA_FORMAT = new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 
 // App Flow §4 "Submit for Approval" (after the report, once a shortlist is set) → confirmation
 // modal. Decision P8-1: the PM picks the shortlisted vendor and the Finance Approver. While a
@@ -54,7 +54,7 @@ export function SubmitForApproval({ rfpId, shortlisted, approvers, recommendedVe
           <Clock className="size-4 text-muted-foreground" aria-hidden="true" />
           Approval pending with {pending.approverName}
         </p>
-        <p className="text-xs text-muted-foreground">Decision due {SLA_FORMAT.format(new Date(pending.slaDueAt))} UTC</p>
+        <p className="text-xs text-muted-foreground">Decision due {formatUtc(pending.slaDueAt, 'EEE, d MMM, HH:mm')} UTC</p>
         <Button variant="outline" size="sm" onClick={() => setRecallOpen(true)}>
           <Undo2 aria-hidden="true" />
           Recall

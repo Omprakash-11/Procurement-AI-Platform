@@ -2,7 +2,6 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { ColumnDef } from '@tanstack/react-table'
-import { format } from 'date-fns'
 import { AlertCircle, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
@@ -10,6 +9,7 @@ import { toast } from 'sonner'
 import { z } from 'zod'
 
 import { DataTable } from '@/components/data-table/data-table'
+import { LocalDate } from '@/components/dates/local-date'
 import { FormField, fieldA11y } from '@/components/forms/form-field'
 import { SubmitButton } from '@/components/forms/submit-button'
 import { ConfirmDialog } from '@/components/rfps/confirm-dialog'
@@ -38,7 +38,7 @@ export function ScoringTemplates() {
   const columns: ColumnDef<ScoringTemplate, unknown>[] = [
     { accessorKey: 'name', header: 'Name', cell: ({ row }) => <span className="font-medium">{row.original.name}</span> },
     { id: 'criteria', header: 'Criteria', cell: ({ row }) => row.original.criteria.map((c) => `${c.name} (${c.weight}%)`).join(', ') },
-    { accessorKey: 'lastUsedAt', header: 'Last used', cell: ({ row }) => (row.original.lastUsedAt ? format(new Date(row.original.lastUsedAt), 'd MMM yyyy') : '—') },
+    { accessorKey: 'lastUsedAt', header: 'Last used', cell: ({ row }) => (row.original.lastUsedAt ? <LocalDate value={row.original.lastUsedAt} /> : '—') },
     {
       id: 'actions',
       header: () => <span className="sr-only">Actions</span>,

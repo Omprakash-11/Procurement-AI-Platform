@@ -12,13 +12,15 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { format, isPast } from 'date-fns'
+import { isPast } from 'date-fns'
 import { Calendar, ClipboardList, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 
+import { LocalDate } from '@/components/dates/local-date'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useHydrated } from '@/lib/use-hydrated'
 import type { PendingRequirement, PipelineRfp } from '@/lib/queries/rfps'
 import { isDraggableStage, RFP_STAGES, RFP_STATUS_LABEL, type RfpStatus } from '@/lib/status'
 import { cn } from '@/lib/utils'
@@ -121,12 +123,14 @@ function Column({ status, label, count, locked, children }: { status: RfpStatus;
 }
 
 function DeadlineBadge({ deadline }: { deadline: string | null }) {
+  const hydrated = useHydrated()
   if (!deadline) return null
-  const past = isPast(new Date(deadline))
+  // "Past" depends on the viewer's clock, so it's decided after hydration (see LocalDate).
+  const past = hydrated && isPast(new Date(deadline))
   return (
     <span className={cn('flex items-center gap-1', past && 'text-destructive')}>
       <Calendar className="size-3" aria-hidden="true" />
-      {format(new Date(deadline), 'd MMM yyyy')}
+      <LocalDate value={deadline} />
       {past && <span className="sr-only">(past deadline)</span>}
     </span>
   )

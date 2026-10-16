@@ -1,10 +1,10 @@
 'use client'
 
 import type { ColumnDef } from '@tanstack/react-table'
-import { format } from 'date-fns'
 import Link from 'next/link'
 
 import { DataTable } from '@/components/data-table/data-table'
+import { LocalDate } from '@/components/dates/local-date'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { PRIORITY_LABEL, REQUIREMENT_STATUS_LABEL, REQUIREMENT_STATUS_TONE } from '@/lib/requirements'
@@ -41,7 +41,7 @@ export function RequirementsTable({ rows, showRaisedBy }: { rows: RequirementRow
       header: 'Status',
       cell: ({ row }) => <StatusBadge tone={REQUIREMENT_STATUS_TONE[row.original.status]}>{REQUIREMENT_STATUS_LABEL[row.original.status]}</StatusBadge>,
     },
-    { accessorKey: 'createdAt', header: 'Submitted Date', cell: ({ row }) => format(new Date(row.original.createdAt), 'd MMM yyyy') },
+    { accessorKey: 'createdAt', header: 'Submitted Date', cell: ({ row }) => <LocalDate value={row.original.createdAt} /> },
     {
       id: 'actions',
       header: () => <span className="sr-only">Actions</span>,

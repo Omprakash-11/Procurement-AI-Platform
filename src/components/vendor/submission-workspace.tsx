@@ -1,11 +1,12 @@
 'use client'
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { differenceInCalendarDays, differenceInHours, format } from 'date-fns'
+import { differenceInCalendarDays, differenceInHours } from 'date-fns'
 import { AlertCircle, CheckCircle2, FileText, Info, Loader2, RotateCcw, Upload, X } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { toast } from 'sonner'
 
+import { LocalDate } from '@/components/dates/local-date'
 import { ConfirmDialog } from '@/components/rfps/confirm-dialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -159,9 +160,9 @@ export function SubmissionWorkspace({ initial }: { initial: ClientVendorRfp }) {
               <dd className="text-foreground">{rfp.orgName}</dd>
               <dt className="text-muted-foreground">Submission deadline</dt>
               <dd className="text-foreground">
-                {deadline ? format(deadline, 'd MMM yyyy, HH:mm') : 'No deadline'}
+                {rfp.deadline ? <LocalDate value={rfp.deadline} pattern="d MMM yyyy, HH:mm" /> : 'No deadline'}
                 {/* App Flow §7: countdown when within 7 days */}
-                {deadline && daysLeft !== null && daysLeft >= 0 && daysLeft <= 7 && !submitted && (
+                {hydrated && deadline && daysLeft !== null && daysLeft >= 0 && daysLeft <= 7 && !submitted && (
                   <span className="ml-2 font-medium text-status-warning-foreground" data-testid="countdown">
                     {daysLeft === 0 ? `${Math.max(0, differenceInHours(deadline, new Date()))} hours left` : `${daysLeft} ${daysLeft === 1 ? 'day' : 'days'} left`}
                   </span>
@@ -290,7 +291,13 @@ export function SubmissionWorkspace({ initial }: { initial: ClientVendorRfp }) {
             {submitted ? (
               <p role="status" className="flex items-center gap-2 text-sm font-medium text-status-success-foreground" data-testid="submitted-message">
                 <CheckCircle2 className="size-4" aria-hidden="true" />
-                Proposal submitted{rfp.submission?.submittedAt ? ` on ${format(new Date(rfp.submission.submittedAt), 'd MMM yyyy, HH:mm')}` : ''}
+                Proposal submitted
+                {rfp.submission?.submittedAt && (
+                  <>
+                    {' on '}
+                    <LocalDate value={rfp.submission.submittedAt} pattern="d MMM yyyy, HH:mm" />
+                  </>
+                )}
               </p>
             ) : (
               canEdit && (

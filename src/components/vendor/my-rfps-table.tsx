@@ -1,10 +1,10 @@
 'use client'
 
 import type { ColumnDef } from '@tanstack/react-table'
-import { format } from 'date-fns'
 import Link from 'next/link'
 
 import { DataTable } from '@/components/data-table/data-table'
+import { LocalDate } from '@/components/dates/local-date'
 import { VendorStatusBadge } from '@/components/vendor/vendor-status-badge'
 import type { VendorFacingStatus } from '@/lib/vendor/portal'
 
@@ -16,7 +16,7 @@ const columns: ColumnDef<MyRfpRow, unknown>[] = [
   {
     accessorKey: 'deadline',
     header: 'Submission Deadline',
-    cell: ({ row }) => (row.original.deadline ? format(new Date(row.original.deadline), 'd MMM yyyy') : '—'),
+    cell: ({ row }) => (row.original.deadline ? <LocalDate value={row.original.deadline} /> : '—'),
   },
   { accessorKey: 'status', header: 'Status', cell: ({ row }) => <VendorStatusBadge status={row.original.status} /> },
   {

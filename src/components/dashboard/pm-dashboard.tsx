@@ -1,12 +1,13 @@
 'use client'
 
 import type { ColumnDef } from '@tanstack/react-table'
-import { format, formatDistanceToNow } from 'date-fns'
+import { format } from 'date-fns'
 import { CheckSquare, FileText, Kanban, Users } from 'lucide-react'
 import Link from 'next/link'
 
 import { StatCard } from '@/components/dashboard/stat-card'
 import { DataTable } from '@/components/data-table/data-table'
+import { RelativeTime } from '@/components/dates/local-date'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge, type StatusTone } from '@/components/ui/status-badge'
 import type { PmDashboard as PmDashboardData } from '@/lib/dashboard'
@@ -115,9 +116,7 @@ export function PmDashboard({ data }: { data: PmDashboardData }) {
                       a.description
                     )}
                   </span>
-                  <time dateTime={a.createdAt} title={new Date(a.createdAt).toLocaleString()} className="shrink-0 text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(a.createdAt), { addSuffix: true })}
-                  </time>
+                  <RelativeTime value={a.createdAt} className="shrink-0 text-xs text-muted-foreground" />
                 </li>
               ))}
             </ul>

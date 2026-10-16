@@ -2,10 +2,10 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { format, formatDistanceToNow } from 'date-fns'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
+import { RelativeTime } from '@/components/dates/local-date'
 import { FormField, fieldA11y } from '@/components/forms/form-field'
 import { SubmitButton } from '@/components/forms/submit-button'
 import { Textarea } from '@/components/ui/textarea'
@@ -64,9 +64,7 @@ export function ReportComments({ rfpId, initialComments, canComment }: ReportCom
           <li key={c.id} className="rounded border border-border bg-card p-4 shadow-sm">
             <div className="mb-1.5 flex items-center gap-2 text-xs text-muted-foreground">
               <span className="font-medium text-foreground">{c.authorName}</span>
-              <time dateTime={c.createdAt} title={format(new Date(c.createdAt), 'd MMM yyyy, HH:mm')}>
-                {formatDistanceToNow(new Date(c.createdAt), { addSuffix: true })}
-              </time>
+              <RelativeTime value={c.createdAt} />
             </div>
             <p className="whitespace-pre-line text-sm text-foreground">{c.body}</p>
           </li>

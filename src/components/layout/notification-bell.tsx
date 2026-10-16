@@ -1,6 +1,5 @@
 'use client'
 
-import { formatDistanceToNow } from 'date-fns'
 import {
   AlertTriangle,
   Bell,
@@ -15,6 +14,7 @@ import {
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
+import { RelativeTime } from '@/components/dates/local-date'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
@@ -93,9 +93,7 @@ export function NotificationBell() {
                   <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm text-foreground">{n.title}</span>
-                    <span className="block text-xs text-muted-foreground" title={new Date(n.created_at).toLocaleString()}>
-                      {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
-                    </span>
+                    <RelativeTime value={n.created_at} className="block text-xs text-muted-foreground" />
                   </span>
                   <span className="mt-1.5 size-2 shrink-0 rounded-full bg-primary" aria-label="Unread" />
                 </button>
