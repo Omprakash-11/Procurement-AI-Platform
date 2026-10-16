@@ -3,7 +3,7 @@
 //
 //   npm run demo:seed     → load "Northbridge Industries" into the local Supabase (once)
 //   npm run demo:reset    → wipe that organisation (only it) and load it again
-//   Production: node --env-file=.env.production.local scripts/demo/seed.mjs --reset --production
+//   Production: node --env-file=deploy.env scripts/demo/seed.mjs --reset --production
 //   (the live demonstration also resets itself nightly through /api/cron/demo-reset — P12-8)
 //
 // Uses the service role. Creates accounts the supported way (admin API, role / org in

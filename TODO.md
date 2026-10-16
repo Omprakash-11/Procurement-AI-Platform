@@ -98,6 +98,9 @@ Legend: `[ ]` todo · `[x]` done · **⛔ Gate** = decision needed before coding
 | 2026-10-15 | **P12-6** Visitor guidance: README.md (demo accounts, tour, AI features, local setup); sign-in demo panel says the data is shared and to upload sample documents only; the vendor upload area links two sample proposals served from `public/samples/` (`.pdf` excluded from the middleware matcher). |
 | 2026-10-15 | **P12-7** (Option A) Public sign-in screens use two panels on wide screens: a flat brand-blue panel (no gradient, Content Guidelines §2.4) with the tagline and four factual product highlights, and the form on the right; narrow screens show the form only. Vendor invite screens show the panel without the highlights. No testimonials or invented claims. |
 | 2026-10-15 | **P12-8** (Option A) Nightly demo reset: `/api/cron/demo-reset` (CRON_SECRET, 404 unless DEMO_MODE=1) + third Vercel cron at 20:30 UTC (02:00 IST). Seed logic moved to `scripts/demo/demo-org.mjs`, shared by the CLI (`seed.mjs`) and the route; demo files ship with the route via `outputFileTracingIncludes`. Docs framing: README presents the full production platform first; demonstration mode is a clearly marked optional section. |
+| 2026-10-16 | **P12-9 (#36, Option A)** Pre-deploy audit: `mammoth` 1.8.0 → 1.13.0 (fixes the directory-traversal advisory; it parses vendor .docx uploads). Accepted as known: `sprintf-js` DoS via `argparse` (mammoth's CLI only, no fix released); the high advisories are build/lint/test tools (tailwind/postcss/chokidar chain, eslint-config-next, Playwright) or Puppeteer's browser downloader (unused — Chromium comes from `@sparticuz/chromium`). Majors (Next 16, puppeteer-core 25) and `@supabase/supabase-js` 2.118 deferred until after launch. |
+| 2026-10-16 | **P12-10 (#54, Option A)** Rate limiting: one Vercel WAF rule (Hobby: 1 free rule) — `/api/auth` path prefix, 20 requests / 60 s per IP, action 429. Dashboard only, no code. |
+| 2026-10-16 | **P12-11 (#16, Option A)** The deploy machine's network blocks Postgres ports 5432/6543 (HTTPS only), so `supabase db push` can't connect. Migrations were applied over HTTPS through the Supabase Management API (`POST /v1/projects/{ref}/database/query`) with a scoped access token (one project, Database read-write, 7-day expiry): each file in its own transaction plus its row in `supabase_migrations.schema_migrations`, so `supabase db push` from an open network sees all 35 as applied. Hosted schema verified identical to local (22 tables, RLS on all, 48 policies, 22 functions, 36+3 triggers, 3 private buckets, pg_cron purge job, auth-hook grant). |
 | 2026-10-14 | **CLAUDE.md over Tech Stack §8.2** Kanban optimistic updates live in the TanStack Query cache, not Zustand ("never put API data in Zustand"). |
 | 2026-10-14 | **#34** Repo already exists — no `git init`; scaffold in a temp dir and copy in; single commit at the end of the verified phase. |
 
@@ -457,23 +460,23 @@ Verify (2026-10-15):
 - [x] P12-8 nightly demo reset route + cron — 9/9 checks; README restructured (platform first, demo optional)
 - [x] Case-study docs in `Docs/case-study/`: customer use case + architecture (6 Mermaid diagrams, all render), linked from README
 - [x] `Docs/case-study/demo-walkthrough.md`: visitor guide (Path A quick tour, Path B full workflow by role); Path B verified end to end in DEMO_MODE with real Gemini
-- [ ] Owner's local testing — pause until the owner confirms
+- [x] Owner's local testing — confirmed by the owner (2026-10-15)
 
 ### 12b — Deploy (only on the owner's explicit go)
 
 ⛔ Gates: #16 (`db push --linked`), whether hosted project `gromqdafteemyvcguyrl` becomes prod, rotating keys shared during dev, Puppeteer on Vercel (#4), rate limiting (#54).
 
 Owner (dashboards / accounts):
-- [ ] Supabase project: URL, anon key, service-role key, DB password (for `supabase link`)
-- [ ] Supabase Auth: register `custom_access_token_hook`; site URL + redirect URLs = the Vercel address; disable public email signup
+- [x] Supabase project: URL, anon key, service-role key, DB password (for `supabase link`)
+- [x] Supabase Auth: register `custom_access_token_hook`; site URL + redirect URLs = the Vercel address; disable public email signup (verified: claims present, RLS scoped, sign-up refused)
 - [ ] Vercel account; import the repo; env vars from `.env.example` + `DEMO_MODE=1`, `NEXT_PUBLIC_APP_URL`, `CRON_SECRET`, `GEMINI_API_KEY`
-- [ ] Fresh Gemini key and new Supabase keys (keys used during development are rotated)
+- [x] Fresh Gemini key (verified: both models available)
 
 Build:
-- [ ] `supabase link`; `supabase db push --linked`; verify buckets, RLS, auth hook
-- [ ] `npm run demo:seed -- --production` against the hosted project
+- [x] `supabase link`; migrations applied over HTTPS (P12-11); buckets, RLS, auth hook verified
+- [x] Demo organisation loaded into the hosted project (`seed.mjs --reset --production`)
 - [ ] Vercel deploy; crons active; PDF export works on Vercel
-- [ ] Smoke test every role on the live address; add the live link to README.md; then the use-case docs (after the owner confirms)
+- [ ] Smoke test every role on the live address; add the live link to README.md; then the use-case docs (done in 12a, before deployment)
 
 Later (no code change): custom domain, verified Resend sender, turn emails on by removing `DEMO_MODE` email logging.
 

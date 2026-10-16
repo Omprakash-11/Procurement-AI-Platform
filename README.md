@@ -170,7 +170,7 @@ npm run demo:seed              # load the sample company (once)
 npm run demo:reset             # restore it to its starting state
 
 # hosted Supabase (refuses without --production)
-node --env-file=.env.production.local scripts/demo/seed.mjs --reset --production
+node --env-file=deploy.env scripts/demo/seed.mjs --reset --production
 ```
 
 The scripts only ever touch the sample company. Running `npx playwright test` resets the local database, so run `npm run demo:seed` again afterwards.
