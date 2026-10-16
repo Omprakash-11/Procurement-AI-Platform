@@ -2,7 +2,7 @@
 
 ProcureMaster is a production-grade, full-stack AI procurement platform for small and mid-sized companies (10–200 employees). It takes a purchase from the first internal request to a signed contract: requirements, requests for proposal (RFPs), vendor proposals, AI-assisted evaluation, finance approval and contract renewals. It is built to shorten that cycle and keep every decision documented.
 
-The platform is complete in its own right: multi-tenant organisations, role-based access, row-level security, an AI document pipeline, approval workflow, scheduled jobs, email notifications, PDF reports and an end-to-end test suite. An optional **demonstration mode** sits on top of it, so the platform can be explored with sample data from each user's point of view. See [Demonstration mode](#demonstration-mode-optional).
+The platform is complete in its own right: multi-tenant organisations, role-based access, row-level security, an AI document pipeline, approval workflow, scheduled jobs, email notifications, PDF reports and an end-to-end test suite. An optional **demonstration mode** sits on top of it, so the platform can be explored with sample data from each user's point of view: live at **[procurement-ai-platform.vercel.app](https://procurement-ai-platform.vercel.app)**. See [Demonstration mode](#demonstration-mode-optional).
 
 ## Documentation
 
@@ -122,7 +122,7 @@ scripts/demo/          demonstration data (optional; see below)
 
 ProcureMaster is not operated by real enterprise customers, so this deployment includes a demonstration layer. It lets anyone experience the platform from the customer's point of view, as each role, with realistic sample data. Demonstration mode is an add-on: it changes nothing in how the platform works, and setting `DEMO_MODE` to empty turns it off completely.
 
-**Live demonstration:** _link added at deployment_
+**Live demonstration:** [procurement-ai-platform.vercel.app](https://procurement-ai-platform.vercel.app)
 
 ### What demonstration mode adds
 

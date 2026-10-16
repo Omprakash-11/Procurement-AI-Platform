@@ -469,14 +469,14 @@ Verify (2026-10-15):
 Owner (dashboards / accounts):
 - [x] Supabase project: URL, anon key, service-role key, DB password (for `supabase link`)
 - [x] Supabase Auth: register `custom_access_token_hook`; site URL + redirect URLs = the Vercel address; disable public email signup (verified: claims present, RLS scoped, sign-up refused)
-- [ ] Vercel account; import the repo; env vars from `.env.example` + `DEMO_MODE=1`, `NEXT_PUBLIC_APP_URL`, `CRON_SECRET`, `GEMINI_API_KEY`
+- [x] Vercel project `procurement-ai-platform` (Hobby), imported from GitHub, install `npm ci`, 9 env vars, function region Tokyo (hnd1, next to the database); WAF rule P12-10 published and verified (21st call → 429)
 - [x] Fresh Gemini key (verified: both models available)
 
 Build:
 - [x] `supabase link`; migrations applied over HTTPS (P12-11); buckets, RLS, auth hook verified
 - [x] Demo organisation loaded into the hosted project (`seed.mjs --reset --production`)
-- [ ] Vercel deploy; crons active; PDF export works on Vercel
-- [ ] Smoke test every role on the live address; add the live link to README.md; then the use-case docs (done in 12a, before deployment)
+- [x] Deployed: https://procurement-ai-platform.vercel.app — live checks 13/13 (3 crons refuse without secret and run with it, demo reset on Vercel, PDF export 84 KB / 6.7 s, vendor 403 on 5 internal APIs)
+- [x] Smoke test every role on the live address (walkthrough 14/14); live link in README.md
 
 Later (no code change): custom domain, verified Resend sender, turn emails on by removing `DEMO_MODE` email logging.
 
